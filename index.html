@@ -8,10 +8,6 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="전화">
 
-<!-- 변경된 순정 iOS 전화 앱 아이콘 -->
-<link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Phone_iOS.png/512px-Phone_iOS.png">
-<link rel="apple-touch-icon-precomposed" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Phone_iOS.png/512px-Phone_iOS.png">
-
 <title>전화</title>
 <style>
 * {
@@ -449,6 +445,7 @@ function getSoundKeyVal(pressedKeyElem) {
     return pressedKeyElem ? pressedKeyElem.getAttribute("data-key") : '1';
 }
 
+// 좌표상에서 가장 가까운 키를 찾되, 일정 거리를 벗어나면 null을 반환하도록 설정
 function getNearestKeyElement(x, y) {
     let minDistance = Infinity;
     let nearestKey = null;
@@ -465,6 +462,11 @@ function getNearestKeyElement(x, y) {
         }
     });
 
+    // 키패드 버튼의 허용 터치 반경 제한 (50px 이상 떨어져 있으면 인식 제외)
+    if (minDistance > 50) {
+        return null;
+    }
+
     return nearestKey;
 }
 
@@ -472,16 +474,10 @@ let isPressed = false;
 let activeKeyElem = null;
 
 const globalPressStart = (e) => {
-    if (e.target.closest('#call') || e.target.closest('.bottom')) {
+    // 전화 버튼 및 하단 탭 영역 클릭 시 처리 제외
+    if (e.target.closest('#call') || e.target.closest('.bottom') || e.target.closest('.display')) {
         return;
     }
-
-    if (e.cancelable) e.preventDefault();
-    if (isPressed) return;
-
-    ensureAudioContext();
-
-    isPressed = true;
 
     let clientX, clientY;
     if (e.touches && e.touches.length > 0) {
@@ -492,10 +488,20 @@ const globalPressStart = (e) => {
         clientY = e.clientY;
     }
 
-    activeKeyElem = getNearestKeyElement(clientX, clientY);
-    if (activeKeyElem) {
-        activeKeyElem.classList.add("active");
+    // 터치 위치 근처에 키패드 버튼이 있는지 검증
+    const targetKey = getNearestKeyElement(clientX, clientY);
+    if (!targetKey) {
+        return; // 키패드 주변의 빈 영역 클릭 시 무시
     }
+
+    if (e.cancelable) e.preventDefault();
+    if (isPressed) return;
+
+    ensureAudioContext();
+    isPressed = true;
+
+    activeKeyElem = targetKey;
+    activeKeyElem.classList.add("active");
 
     const keyValToPlay = getSoundKeyVal(activeKeyElem);
     if (keyValToPlay) {
@@ -504,13 +510,12 @@ const globalPressStart = (e) => {
 };
 
 const globalPressEnd = (e) => {
-    if (e.target.closest('#call') || e.target.closest('.bottom')) {
+    if (e.target.closest('#call') || e.target.closest('.bottom') || e.target.closest('.display')) {
         return;
     }
 
-    if (e.cancelable) e.preventDefault();
-
     if (isPressed) {
+        if (e.cancelable) e.preventDefault();
         isPressed = false;
         
         if (activeKeyElem) {
