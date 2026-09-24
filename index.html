@@ -99,7 +99,7 @@ body {
     align-items: center;
     position: relative;
     cursor: pointer;
-    transition: background 0.15s ease-out, color 0.15s ease-out, transform 0.1s ease-out;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* 버튼 주위 여백으로도 부드럽게 눌리도록 가상의 확장 터치 영역 부여 */
@@ -113,10 +113,12 @@ body {
     border-radius: 50%;
 }
 
+/* 숫자가 눌렸을 때 아이폰 스타일의 하얀색 전환 애니메이션 효과 */
 .key:active, .key.active {
-    background: #e5e5ea;
-    color: #000000;
+    background: #e5e5ea !important;
+    color: #000000 !important;
     transform: scale(0.94);
+    transition: background 0.05s ease, color 0.05s ease, transform 0.05s ease;
 }
 
 .num {
@@ -185,7 +187,7 @@ body {
     cursor: pointer;
     transition: background 0.2s ease, transform 0.1s ease;
     z-index: 10;
-    pointer-events: auto; /* 빈공간은 막고 버튼만 클릭 허용 */
+    pointer-events: auto;
 }
 
 .call:active {
@@ -212,7 +214,7 @@ body {
     z-index: 10;
     opacity: 0.8;
     transition: opacity 0.1s ease;
-    pointer-events: auto; /* 양옆 빈공간은 막고 지우기 버튼만 클릭 허용 */
+    pointer-events: auto;
 }
 
 .delete-btn:active {
@@ -509,7 +511,7 @@ function updateDisplay() {
     }
 }
 
-// 각 키패드 개별 클릭 이벤트 적용 (숫자 주위 여백은 자연스럽게 터치 허용)
+// 각 키패드 개별 클릭 이벤트 적용 (숫자 주위 여백 터치 허용 + 애니메이션)
 keys.forEach(key => {
     const keyVal = key.getAttribute("data-key");
 
