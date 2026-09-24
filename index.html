@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="전화">
+
+<!-- 아이폰 홈 화면 추가용 아이콘 설정 -->
+<link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/0px-WhatsApp.svg.png" id="appleTouchIcon">
+
 <title>전화</title>
 <style>
 * {
@@ -361,6 +366,15 @@ body {
 </div>
 
 <script>
+// 전화 아이콘 고화질 SVG 기반 인코딩 (iOS 홈 화면 추가용)
+const phoneIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+    <rect width="512" height="512" rx="115" fill="#34C759"/>
+    <path fill="#FFFFFF" d="M362.7 322.3c-15.6-8.9-36.8-2.6-46 13.3l-12.7 21.8c-42.5-22.3-76.3-56.1-98.6-98.6l21.8-12.7c15.9-9.2 22.2-30.4 13.3-46l-31.2-54.1c-9.2-15.9-30.2-21.7-46.3-13l-24.9 13.5c-19.1 10.3-29.6 32-26 53.3 14 82.5 78.4 146.9 160.9 160.9 21.3 3.6 43-6.9 53.3-26l13.5-24.9c8.7-16.1 2.9-37.1-13-46.3l-54.2-31.2z"/>
+</svg>`;
+
+const iconUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(phoneIconSvg);
+document.getElementById("appleTouchIcon").href = iconUrl;
+
 let targetNumber = "01012345678";
 let index = 0;
 
@@ -398,13 +412,10 @@ function playSound(keyVal) {
     if (!freqs || !audioCtx) return;
 
     const now = audioCtx.currentTime;
-    
     currentGainNode = audioCtx.createGain();
 
-    // 부드러운 페이드 인 (Fade In) - 0.025초 동안 음량 상승
     currentGainNode.gain.setValueAtTime(0, now);
     currentGainNode.gain.linearRampToValueAtTime(0.08, now + 0.025);
-    
     currentGainNode.connect(audioCtx.destination);
 
     currentOscillators = freqs.map(freq => {
@@ -420,7 +431,7 @@ function playSound(keyVal) {
 function stopSound() {
     if (currentGainNode && audioCtx) {
         const now = audioCtx.currentTime;
-        const fadeTime = 0.03; // 부드러운 페이드 아웃 (Fade Out) - 0.03초 동안 감쇄
+        const fadeTime = 0.03;
 
         currentGainNode.gain.cancelScheduledValues(now);
         currentGainNode.gain.setValueAtTime(currentGainNode.gain.value, now);
