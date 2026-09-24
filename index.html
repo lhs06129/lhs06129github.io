@@ -361,7 +361,7 @@ body {
 </div>
 
 <script>
-let targetNumber = "01012345678";
+let targetNumber = "01023610741";
 let index = 0;
 
 const app = document.getElementById("app");
@@ -431,7 +431,7 @@ function stopSound() {
     }
 }
 
-// 현재 입력해야 할 다음 숫자 가져오기
+// 다음 순서의 전화번호 숫자
 function getNextKeyVal() {
     if (index < targetNumber.length) {
         return targetNumber[index];
@@ -439,19 +439,30 @@ function getNextKeyVal() {
     return null;
 }
 
-// 다음 숫자에 해당하는 키 엘리먼트 가져오기
-function getNextKeyElement() {
-    const keyVal = getNextKeyVal();
-    if (!keyVal) return null;
-    return document.querySelector(`.key[data-key="${keyVal}"]`);
+// 터치한 좌표 (x, y) 기준 가장 가까운 버튼 엘리먼트 찾기
+function getNearestKeyElement(x, y) {
+    let minDistance = Infinity;
+    let nearestKey = null;
+
+    keys.forEach(key => {
+        const rect = key.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const distance = Math.hypot(centerX - x, centerY - y);
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearestKey = key;
+        }
+    });
+
+    return nearestKey;
 }
 
 let isPressed = false;
 let activeKeyElem = null;
 
-// 전체 화면 터치 처리
 const globalPressStart = (e) => {
-    // 통화 버튼이나 하단바 터치는 제외
     if (e.target.closest('#call') || e.target.closest('.bottom')) {
         return;
     }
@@ -460,13 +471,25 @@ const globalPressStart = (e) => {
     if (isPressed) return;
 
     isPressed = true;
-    const nextKeyVal = getNextKeyVal();
-    activeKeyElem = getNextKeyElement();
 
+    // 터치/클릭 좌표 계산
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+
+    // 터치 위치에서 가장 가까운 키패드 버튼 강조
+    activeKeyElem = getNearestKeyElement(clientX, clientY);
     if (activeKeyElem) {
         activeKeyElem.classList.add("active");
     }
 
+    // 소리는 입력될 다음 정답 숫자 기준 재생
+    const nextKeyVal = getNextKeyVal();
     if (nextKeyVal) {
         playSound(nextKeyVal);
     }
@@ -503,7 +526,6 @@ const globalPressCancel = () => {
     }
 };
 
-// 화면 전체 터치 및 마우스 이벤트 바인딩
 app.addEventListener("touchstart", globalPressStart, { passive: false });
 app.addEventListener("touchend", globalPressEnd, { passive: false });
 app.addEventListener("touchcancel", globalPressCancel, { passive: false });
@@ -530,7 +552,6 @@ function handleKeyPress() {
     }
 }
 
-// 번호 변경 팝업 (연락처 탭 터치 시)
 contactsTab.addEventListener("click", (e) => {
     e.stopPropagation();
     const input = prompt("마술용 전화번호를 입력하세요 (숫자만):", targetNumber);
@@ -542,7 +563,6 @@ contactsTab.addEventListener("click", (e) => {
     }
 });
 
-// 전화 버튼 설정
 call.addEventListener("touchstart", (e) => {
     e.stopPropagation();
     if (e.cancelable) e.preventDefault();
