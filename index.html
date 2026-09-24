@@ -39,7 +39,6 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* 상단 번호 표시 영역 */
 .display {
     flex: 1;
     display: flex;
@@ -59,7 +58,6 @@ body {
     color: #fff;
 }
 
-/* 키패드 영역 */
 .main-content {
     display: flex;
     flex-direction: column;
@@ -112,21 +110,18 @@ body {
     justify-content: center;
 }
 
-/* 별(*) 중앙 정렬 */
 .key[data-key="*"] .num {
     font-size: 40px;
     line-height: 1;
     transform: translateY(11px);
 }
 
-/* 샵(#) 중앙 정렬 */
 .key[data-key="#"] .num {
     font-size: 32px;
     line-height: 1;
     transform: translateY(4px);
 }
 
-/* 알파벳 서브 텍스트 (글자 간격 1.5px 적용) */
 .sub {
     margin-top: 2px;
     font-size: 10px;
@@ -146,7 +141,6 @@ body {
     letter-spacing: 0;
 }
 
-/* 통화 버튼 */
 .call-area {
     margin-top: 18px;
     margin-bottom: 24px;
@@ -177,7 +171,6 @@ body {
     height: 34px;
 }
 
-/* 하단 네비게이션 바 */
 .bottom {
     width: 100%;
     padding: 0 16px 12px 16px;
@@ -325,7 +318,6 @@ body {
                 <div class="tab-name">최근 통화</div>
             </div>
 
-            <!-- 연락처 탭 (비밀 번호 변경 기능 연동) -->
             <div class="tab" id="contactsTab">
                 <div class="tab-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
@@ -370,19 +362,34 @@ const keys = document.querySelectorAll(".key");
 const call = document.getElementById("call");
 const contactsTab = document.getElementById("contactsTab");
 
-/* 모바일 모드 첫 타 사운드 지연 완벽 해결 */
+/* 개편된 오디오 시스템 */
 let audioCtx = null;
 let currentGainNode = null;
 let currentOscillators = [];
 
-function ensureAudioReady() {
+// 모바일 첫 타 및 파열음 방지를 위한 글로벌 인스턴스 초기화
+function initAudioEngine() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
+
+    // 오디오 엔진을 즉시 깨우기 위한 무음 버퍼 재생
+    try {
+        const buffer = audioCtx.createBuffer(1, 1, 22050);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+    } catch(e) {}
 }
+
+// 최초 터치 시 즉시 오디오 엔진을 100% 활성화
+['touchstart', 'touchend', 'mousedown', 'pointerdown'].forEach(evt => {
+    window.addEventListener(evt, initAudioEngine, { once: true, capture: true });
+});
 
 const dtmfFrequencies = {
     '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
@@ -392,23 +399,26 @@ const dtmfFrequencies = {
 };
 
 function playDTMF(keyVal) {
-    ensureAudioReady();
-    stopDTMF();
+    initAudioEngine();
+    stopDTMF(); // 기존 소리 감쇄
 
     const freqs = dtmfFrequencies[keyVal];
     if (!freqs) return;
 
+    const now = audioCtx.currentTime;
     currentGainNode = audioCtx.createGain();
-    currentGainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
-    currentGainNode.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.005);
+
+    // 파열음(Pop) 방지: 0에서부터 아주 미세하게 볼륨 올림 (0.005초)
+    currentGainNode.gain.setValueAtTime(0.0001, now);
+    currentGainNode.gain.exponentialRampToValueAtTime(0.15, now + 0.005);
     currentGainNode.connect(audioCtx.destination);
 
     currentOscillators = freqs.map(freq => {
         const osc = audioCtx.createOscillator();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(freq, now);
         osc.connect(currentGainNode);
-        osc.start();
+        osc.start(now);
         return osc;
     });
 }
@@ -416,27 +426,26 @@ function playDTMF(keyVal) {
 function stopDTMF() {
     if (currentGainNode && audioCtx) {
         const now = audioCtx.currentTime;
-        currentGainNode.gain.setValueAtTime(currentGainNode.gain.value, now);
-        currentGainNode.gain.linearRampToValueAtTime(0.001, now + 0.02);
         
+        // 파열음(Pop) 방지: 손을 뗄 때 0.015초 동안 지수 감쇄(Decay) 적용
+        currentGainNode.gain.setTargetAtTime(0, now, 0.005);
+
         const oscsToStop = [...currentOscillators];
         setTimeout(() => {
             oscsToStop.forEach(osc => {
                 try { osc.stop(); } catch(e) {}
             });
-        }, 20);
-        
+        }, 30);
+
         currentOscillators = [];
         currentGainNode = null;
     }
 }
 
-// 터치 이벤트 연결
 keys.forEach(key => {
     const keyVal = key.getAttribute("data-key");
 
     const pressStart = (e) => {
-        ensureAudioReady(); // 터치 즉시 AudioContext 동기적 활성화
         key.classList.add("active");
         playDTMF(keyVal);
     };
@@ -454,8 +463,8 @@ keys.forEach(key => {
         stopDTMF();
     };
 
-    key.addEventListener("touchstart", (e) => { e.preventDefault(); pressStart(e); });
-    key.addEventListener("touchend", (e) => { e.preventDefault(); pressEnd(e); });
+    key.addEventListener("touchstart", (e) => { e.preventDefault(); pressStart(e); }, { passive: false });
+    key.addEventListener("touchend", (e) => { e.preventDefault(); pressEnd(e); }, { passive: false });
     key.addEventListener("touchcancel", pressCancel);
 
     key.addEventListener("mousedown", pressStart);
@@ -478,18 +487,16 @@ function handleKeyPress() {
     }
 }
 
-/* 연락처 탭을 누르면 비밀 번호 변경창 팝업 기능 */
 contactsTab.addEventListener("click", () => {
     const input = prompt("마술용 전화번호를 입력하세요 (숫자만):", targetNumber);
     if (input !== null && input.trim() !== "") {
-        targetNumber = input.replace(/[^0-9]/g, ""); // 숫자만 추출
-        index = 0; // 초기화
+        targetNumber = input.replace(/[^0-9]/g, "");
+        index = 0;
         display.textContent = "";
         alert("전화번호가 " + targetNumber + " (으)로 변경되었습니다.");
     }
 });
 
-/* 통화 버튼 동작 */
 call.addEventListener("touchstart", (e) => { e.preventDefault(); call.classList.add("active"); });
 call.addEventListener("touchend", (e) => {
     e.preventDefault();
