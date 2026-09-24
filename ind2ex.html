@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>전화</title>
+    <!-- 홈 화면 추가 시 앱처럼 보이게 하는 iOS 전용 설정 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100vh;
+            padding-bottom: 40px;
+            overflow: hidden;
+        }
+        /* 번호 표시 영역 */
+        .display-container {
+            margin-top: 80px;
+            text-align: center;
+            height: 80px;
+        }
+        .phone-number {
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            min-height: 44px;
+        }
+        .add-number {
+            color: #007aff;
+            font-size: 14px;
+            margin-top: 6px;
+            visibility: hidden;
+        }
+        .add-number.active {
+            visibility: visible;
+        }
+
+        /* 키패드 영역 */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px 25px;
+            padding: 0 45px;
+            margin-bottom: 20px;
+        }
+        .key {
+            background-color: #333333;
+            color: #fff;
+            border-radius: 50%;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .key:active {
+            background-color: #737373;
+        }
+        .key .num {
+            font-size: 32px;
+            font-weight: 400;
+            line-height: 1;
+        }
+        .key .sub {
+            font-size: 10px;
+            letter-spacing: 2px;
+            margin-top: 2px;
+            color: #aaa;
+        }
+
+        /* 하단 통화 버튼 영역 */
+        .footer {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 0 45px;
+            align-items: center;
+        }
+        .call-btn {
+            grid-column: 2;
+            background-color: #34c759;
+            border-radius: 50%;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .call-btn:active {
+            background-color: #248a3d;
+        }
+        .call-btn svg {
+            width: 32px;
+            height: 32px;
+            fill: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="display-container">
+        <div class="phone-number" id="display"></div>
+        <div class="add-number" id="addBtn">번호 추가</div>
+    </div>
+
+    <!-- 키패드 전체 (어느 버튼을 눌러도 동일하게 작동함) -->
+    <div class="keypad" id="keypad">
+        <div class="key"><span class="num">1</span><span class="sub">&nbsp;</span></div>
+        <div class="key"><span class="num">2</span><span class="sub">ABC</span></div>
+        <div class="key"><span class="num">3</span><span class="sub">DEF</span></div>
+        <div class="key"><span class="num">4</span><span class="sub">GHI</span></div>
+        <div class="key"><span class="num">5</span><span class="sub">JKL</span></div>
+        <div class="key"><span class="num">6</span><span class="sub">MNO</span></div>
+        <div class="key"><span class="num">7</span><span class="sub">PQRS</span></div>
+        <div class="key"><span class="num">8</span><span class="sub">TUV</span></div>
+        <div class="key"><span class="num">9</span><span class="sub">WXYZ</span></div>
+        <div class="key"><span class="num">*</span><span class="sub"></span></div>
+        <div class="key"><span class="num">0</span><span class="sub">+</span></div>
+        <div class="key"><span class="num">#</span><span class="sub"></span></div>
+    </div>
+
+    <div class="footer">
+        <div class="call-btn" id="callBtn">
+            <svg viewBox="0 0 24 24">
+                <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+            </svg>
+        </div>
+    </div>
+
+    <script>
+        // 1. 찍히게 하고 싶은 내 실제 전화번호 세팅
+        const targetNumber = "01012345678"; 
+        
+        let currentIndex = 0;
+        const display = document.getElementById('display');
+        const addBtn = document.getElementById('addBtn');
+
+        // 화면이나 키패드 아무 곳이나 누를 때 이벤트 발생
+        document.getElementById('keypad').addEventListener('click', function() {
+            if (currentIndex < targetNumber.length) {
+                currentIndex++;
+                updateDisplay();
+            }
+        });
+
+        // 하이픈(-) 자동 하이라이트 및 출력 포맷팅
+        function updateDisplay() {
+            let currentStr = targetNumber.substring(0, currentIndex);
+            
+            // 번호 서식 (010-XXXX-XXXX 형태)
+            if (currentStr.length > 3 && currentStr.length <= 7) {
+                currentStr = currentStr.slice(0, 3) + "-" + currentStr.slice(3);
+            } else if (currentStr.length > 7) {
+                currentStr = currentStr.slice(0, 3) + "-" + currentStr.slice(3, 7) + "-" + currentStr.slice(7);
+            }
+            
+            display.innerText = currentStr;
+            if (currentIndex > 0) {
+                addBtn.classList.add('active');
+            }
+        }
+
+        // 통화 버튼 누를 때 실제 전화 걸기
+        document.getElementById('callBtn').addEventListener('click', function() {
+            if (currentIndex > 0) {
+                // 실제 전화 앱 실행
+                window.location.href = `tel:${targetNumber}`;
+            }
+        });
+    </script>
+</body>
+</html>
