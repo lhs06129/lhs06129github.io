@@ -5,27 +5,20 @@
 
 <meta name="viewport"
       content="width=device-width,
-      initial-scale=1.0,
-      maximum-scale=1.0,
-      user-scalable=no,
-      viewport-fit=cover">
+               initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no,
+               viewport-fit=cover">
 
 <title>전화</title>
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-
 <style>
-
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
-
-    -webkit-user-select: none;
-    user-select: none;
-
+    box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 html,
@@ -38,7 +31,6 @@ body {
 
 body {
     color: #fff;
-
     font-family:
         -apple-system,
         BlinkMacSystemFont,
@@ -48,47 +40,56 @@ body {
         Arial,
         sans-serif;
 
-    min-height: 100dvh;
-
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
-
-    display: flex;
-    flex-direction: column;
 }
 
 
-/* =========================
-   번호 표시
-========================= */
+/* =========================================
+   전체 화면
+========================================= */
 
-.display {
-    height: 29dvh;
+.phone-app {
+    width: 100%;
+    height: 100%;
 
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+
+    background: #000;
+}
+
+
+/* =========================================
+   번호 표시 영역
+========================================= */
+
+.number-area {
+    height: 27%;
+
+    display: flex;
     justify-content: center;
+    align-items: flex-end;
 
     padding-bottom: 24px;
 }
 
-.phone-number {
-    color: white;
+.number {
+    min-height: 45px;
 
-    font-size: clamp(34px, 9vw, 40px);
+    font-size: 38px;
     font-weight: 300;
 
     letter-spacing: 1px;
+    line-height: 45px;
 
-    min-height: 44px;
-
-    white-space: nowrap;
+    text-align: center;
 }
 
 
-/* =========================
+/* =========================================
    키패드
-========================= */
+========================================= */
 
 .keypad {
     width: 100%;
@@ -98,17 +99,20 @@ body {
     display: flex;
     flex-direction: column;
 
-    gap: 37px;
+    gap: 14px;
 }
 
 .row {
+    width: 100%;
+
     display: grid;
+    grid-template-columns: repeat(3, 1fr);
 
-    grid-template-columns:
-        repeat(3, 1fr);
-
-    gap: 14%;
+    gap: 14.5%;
 }
+
+
+/* 개별 버튼 */
 
 .key {
     width: 100%;
@@ -124,321 +128,352 @@ body {
     align-items: center;
     justify-content: center;
 
-    transition:
-        background-color 0.08s,
-        transform 0.08s;
+    transition: background .08s;
 }
 
 .key:active {
     background: #5a5a5c;
-    transform: scale(0.98);
 }
+
+
+/* 숫자 */
 
 .num {
-    font-size: 42px;
-    line-height: 42px;
-
+    font-size: 43px;
     font-weight: 300;
+
+    line-height: 43px;
 }
+
+
+/* 영문 */
 
 .sub {
-    font-size: 16px;
-    line-height: 17px;
+    margin-top: 4px;
 
+    font-size: 16px;
     font-weight: 600;
 
-    letter-spacing: 3px;
+    line-height: 16px;
 
-    margin-top: 2px;
+    letter-spacing: 3px;
 }
 
 
-/* =========================
+/* =========================================
    통화 버튼
-========================= */
+========================================= */
 
 .call-area {
     flex: 1;
 
-    min-height: 110px;
-
     display: flex;
-
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+
+    min-height: 115px;
 }
 
-.call {
-    width: 84px;
-    height: 84px;
+.call-button {
+    width: 166px;
+    height: 166px;
+
+    max-width: 22vw;
+    max-height: 22vw;
 
     border-radius: 50%;
 
-    background: #34c759;
+    background: #30d158;
 
     display: flex;
-
     justify-content: center;
     align-items: center;
 }
 
-.call:active {
+.call-button:active {
     background: #248a3d;
 }
 
-.call svg {
-    width: 38px;
-    height: 38px;
-
-    fill: white;
+.call-button svg {
+    width: 61px;
+    height: 61px;
 }
 
 
-/* =========================
-   하단 탭
-========================= */
+/* =========================================
+   하단 탭 바
+========================================= */
 
 .bottom {
     width: 100%;
 
     padding:
         0
-        4%
-        max(12px, env(safe-area-inset-bottom));
+        5.5%
+        17px;
 }
 
-.tabs {
+.bottom-bar {
     width: 100%;
+    height: 116px;
 
-    height: 86px;
+    background: #18181a;
+
+    border: 1px solid #303034;
+
+    border-radius: 60px;
 
     display: grid;
-
-    grid-template-columns:
-        repeat(5, 1fr);
+    grid-template-columns: repeat(5, 1fr);
 
     align-items: center;
 }
 
+
+/* =========================================
+   탭
+========================================= */
+
 .tab {
-    height: 82px;
+    height: 100%;
 
     display: flex;
-
     flex-direction: column;
 
     justify-content: center;
     align-items: center;
 
-    gap: 4px;
+    gap: 5px;
 
-    color: #f2f2f7;
+    color: #fff;
+}
 
-    font-size: 13px;
+.tab-name {
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 500;
 
     white-space: nowrap;
 }
 
-.icon {
-    height: 43px;
 
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-}
-
-
-/* 선택된 키패드 */
-
-.tab.selected {
-    color: #0a84ff;
-
-    background: #29292b;
-
-    border-radius: 42px;
-}
-
-
-/* =========================
-   아이콘
-========================= */
+/* =========================================
+   즐겨찾기
+========================================= */
 
 .star {
-    font-size: 42px;
-    line-height: 42px;
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 48px;
+    line-height: 48px;
 }
 
-.clock {
-    width: 36px;
-    height: 36px;
 
-    border:
-        3px solid white;
+/* =========================================
+   최근 통화
+========================================= */
+
+.recent-icon {
+    width: 43px;
+    height: 43px;
+
+    border: 4px solid #fff;
 
     border-radius: 50%;
 
     position: relative;
 }
 
-.clock::before {
+.recent-icon::before {
     content: "";
 
     position: absolute;
 
-    width: 3px;
-    height: 12px;
+    width: 4px;
+    height: 15px;
 
-    background: white;
+    background: #fff;
 
-    left: 14px;
+    border-radius: 3px;
+
+    left: 17px;
     top: 6px;
-
-    border-radius: 2px;
 }
 
-.clock::after {
+.recent-icon::after {
     content: "";
 
     position: absolute;
 
-    width: 10px;
-    height: 3px;
+    width: 13px;
+    height: 4px;
 
-    background: white;
+    background: #fff;
 
-    left: 14px;
-    top: 17px;
+    border-radius: 3px;
 
-    transform:
-        rotate(-30deg);
+    left: 17px;
+    top: 20px;
+
+    transform: rotate(-35deg);
 
     transform-origin: left center;
-
-    border-radius: 2px;
 }
 
 
-.contact {
-    width: 38px;
-    height: 38px;
+/* =========================================
+   연락처
+========================================= */
+
+.person-icon {
+    width: 43px;
+    height: 43px;
+
+    background: #fff;
 
     border-radius: 50%;
-
-    background: white;
 
     position: relative;
 }
 
-.contact::before {
+.person-icon::before {
     content: "";
 
     position: absolute;
 
-    width: 12px;
-    height: 12px;
-
-    border-radius: 50%;
-
-    background: #1c1c1e;
-
-    top: 6px;
-    left: 13px;
-}
-
-.contact::after {
-    content: "";
-
-    position: absolute;
-
-    width: 25px;
+    width: 13px;
     height: 13px;
 
-    border-radius:
-        14px 14px 8px 8px;
-
-    background: #1c1c1e;
-
-    left: 6px;
-    bottom: 5px;
-}
-
-
-.grid-icon {
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, 7px);
-
-    grid-template-rows:
-        repeat(3, 7px);
-
-    gap: 4px;
-}
-
-.grid-icon span {
-    width: 7px;
-    height: 7px;
+    background: #18181a;
 
     border-radius: 50%;
 
-    background: #0a84ff;
+    top: 7px;
+    left: 15px;
+}
+
+.person-icon::after {
+    content: "";
+
+    position: absolute;
+
+    width: 27px;
+    height: 14px;
+
+    background: #18181a;
+
+    border-radius: 15px 15px 10px 10px;
+
+    bottom: 6px;
+    left: 8px;
 }
 
 
-.vm {
-    display: flex;
+/* =========================================
+   키패드 아이콘
+========================================= */
 
+.keypad-tab {
+    width: 90px;
+    height: 84px;
+
+    border-radius: 45px;
+
+    background: #303033;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: -1px;
+}
+
+.dots {
+    display: grid;
+
+    grid-template-columns: repeat(3, 9px);
+    grid-template-rows: repeat(3, 9px);
+
+    gap: 6px;
+}
+
+.dot {
+    width: 9px;
+    height: 9px;
+
+    border-radius: 50%;
+
+    background: #0a9cff;
+}
+
+
+/* 선택된 키패드 글자 */
+
+.selected .tab-name {
+    color: #0a9cff;
+}
+
+
+/* =========================================
+   음성 사서함
+========================================= */
+
+.voicemail {
+    display: flex;
     align-items: center;
 
     gap: 5px;
 }
 
-.vm span {
-    width: 30px;
-    height: 30px;
+.vm {
+    width: 40px;
+    height: 40px;
 
-    border:
-        3px solid white;
+    border: 4px solid #fff;
 
     border-radius: 50%;
 }
 
 
-/* =========================
-   작은 화면
-========================= */
+/* =========================================
+   화면이 작은 아이폰
+========================================= */
 
 @media (max-height: 750px) {
 
-    .display {
-        height: 25dvh;
+    .number-area {
+        height: 22%;
     }
 
     .keypad {
-        gap: 21px;
+        gap: 10px;
     }
 
     .call-area {
-        min-height: 75px;
+        min-height: 80px;
     }
 
-    .call {
-        width: 70px;
-        height: 70px;
+    .call-button {
+        width: 125px;
+        height: 125px;
     }
 
-    .call svg {
-        width: 32px;
-        height: 32px;
+    .call-button svg {
+        width: 48px;
+        height: 48px;
     }
 
-    .tabs {
-        height: 75px;
+    .bottom-bar {
+        height: 90px;
     }
 
-    .tab {
-        height: 72px;
+    .tab-name {
+        font-size: 14px;
     }
 }
 
@@ -448,236 +483,241 @@ body {
 
 <body>
 
+<div class="phone-app">
 
-<!-- 번호 -->
 
-<div class="display">
+    <!-- =================================
+         번호
+    ================================== -->
+
+    <div class="number-area">
+
+        <div
+            class="number"
+            id="number">
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================
+         키패드
+    ================================== -->
 
     <div
-        class="phone-number"
-        id="display">
-    </div>
-
-</div>
+        class="keypad"
+        id="keypad">
 
 
+        <div class="row">
 
-<!-- 키패드 -->
-
-<div
-    class="keypad"
-    id="keypad">
-
-
-    <div class="row">
-
-        <div class="key">
-            <span class="num">1</span>
-        </div>
-
-        <div class="key">
-            <span class="num">2</span>
-            <span class="sub">ABC</span>
-        </div>
-
-        <div class="key">
-            <span class="num">3</span>
-            <span class="sub">DEF</span>
-        </div>
-
-    </div>
-
-
-    <div class="row">
-
-        <div class="key">
-            <span class="num">4</span>
-            <span class="sub">GHI</span>
-        </div>
-
-        <div class="key">
-            <span class="num">5</span>
-            <span class="sub">JKL</span>
-        </div>
-
-        <div class="key">
-            <span class="num">6</span>
-            <span class="sub">MNO</span>
-        </div>
-
-    </div>
-
-
-    <div class="row">
-
-        <div class="key">
-            <span class="num">7</span>
-            <span class="sub">PQRS</span>
-        </div>
-
-        <div class="key">
-            <span class="num">8</span>
-            <span class="sub">TUV</span>
-        </div>
-
-        <div class="key">
-            <span class="num">9</span>
-            <span class="sub">WXYZ</span>
-        </div>
-
-    </div>
-
-
-    <div class="row">
-
-        <div class="key">
-            <span class="num">*</span>
-        </div>
-
-        <div class="key">
-            <span class="num">0</span>
-            <span class="sub">+</span>
-        </div>
-
-        <div class="key">
-            <span class="num">#</span>
-        </div>
-
-    </div>
-
-
-</div>
-
-
-
-<!-- 통화 -->
-
-<div class="call-area">
-
-    <div
-        class="call"
-        id="callBtn">
-
-        <svg viewBox="0 0 24 24">
-
-            <path d="
-            M6.62 10.79
-            a15.05 15.05 0 0 0
-            6.59 6.59
-            l2.2-2.2
-            c.27-.27.67-.36
-            1.02-.24
-            1.12.37 2.33.57
-            3.57.57
-            .55 0 1 .45 1 1
-            V20
-            c0 .55-.45 1-1 1
-            C10.61 21 3 13.39 3 4
-            c0-.55.45-1 1-1
-            h3.5
-            c.55 0 1 .45 1 1
-            0 1.25.2 2.45.57 3.57
-            .11.35.03.74-.25 1.02
-            l-2.2 2.2z"/>
-
-        </svg>
-
-    </div>
-
-</div>
-
-
-
-<!-- 하단 메뉴 -->
-
-<div class="bottom">
-
-    <div class="tabs">
-
-
-        <div class="tab">
-
-            <div class="icon star">
-                ★
+            <div class="key">
+                <div class="num">1</div>
+                <div class="sub"></div>
             </div>
 
-            <span>
-                즐겨찾기
-            </span>
-
-        </div>
-
-
-        <div class="tab">
-
-            <div class="icon">
-                <div class="clock"></div>
+            <div class="key">
+                <div class="num">2</div>
+                <div class="sub">ABC</div>
             </div>
 
-            <span>
-                최근 통화
-            </span>
-
-        </div>
-
-
-        <div class="tab">
-
-            <div class="icon">
-                <div class="contact"></div>
+            <div class="key">
+                <div class="num">3</div>
+                <div class="sub">DEF</div>
             </div>
 
-            <span>
-                연락처
-            </span>
+        </div>
+
+
+        <div class="row">
+
+            <div class="key">
+                <div class="num">4</div>
+                <div class="sub">GHI</div>
+            </div>
+
+            <div class="key">
+                <div class="num">5</div>
+                <div class="sub">JKL</div>
+            </div>
+
+            <div class="key">
+                <div class="num">6</div>
+                <div class="sub">MNO</div>
+            </div>
 
         </div>
 
 
-        <div class="tab selected">
+        <div class="row">
 
-            <div class="icon">
+            <div class="key">
+                <div class="num">7</div>
+                <div class="sub">PQRS</div>
+            </div>
 
-                <div class="grid-icon">
+            <div class="key">
+                <div class="num">8</div>
+                <div class="sub">TUV</div>
+            </div>
 
-                    <span></span>
-                    <span></span>
-                    <span></span>
+            <div class="key">
+                <div class="num">9</div>
+                <div class="sub">WXYZ</div>
+            </div>
 
-                    <span></span>
-                    <span></span>
-                    <span></span>
+        </div>
 
-                    <span></span>
-                    <span></span>
-                    <span></span>
 
+        <div class="row">
+
+            <div class="key">
+                <div class="num">*</div>
+                <div class="sub"></div>
+            </div>
+
+            <div class="key">
+                <div class="num">0</div>
+                <div class="sub">+</div>
+            </div>
+
+            <div class="key">
+                <div class="num">#</div>
+                <div class="sub"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================
+         통화
+    ================================== -->
+
+    <div class="call-area">
+
+        <div
+            class="call-button"
+            id="call">
+
+            <svg viewBox="0 0 24 24">
+
+                <path
+                    fill="white"
+                    d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24
+                    1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1
+                    C9.61 21 3 14.39 3 6c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1
+                    0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.45 2.2z"/>
+
+            </svg>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================
+         하단 메뉴
+    ================================== -->
+
+    <div class="bottom">
+
+        <div class="bottom-bar">
+
+
+            <!-- 즐겨찾기 -->
+
+            <div class="tab">
+
+                <div class="star">★</div>
+
+                <div class="tab-name">
+                    즐겨찾기
                 </div>
 
             </div>
 
-            <span>
-                키패드
-            </span>
 
-        </div>
+            <!-- 최근 통화 -->
 
+            <div class="tab">
 
-        <div class="tab">
+                <div class="recent-icon"></div>
 
-            <div class="icon vm">
-
-                <span></span>
-                <span></span>
+                <div class="tab-name">
+                    최근 통화
+                </div>
 
             </div>
 
-            <span>
-                음성 사서함
-            </span>
+
+            <!-- 연락처 -->
+
+            <div class="tab">
+
+                <div class="person-icon"></div>
+
+                <div class="tab-name">
+                    연락처
+                </div>
+
+            </div>
+
+
+            <!-- 키패드 -->
+
+            <div class="tab selected">
+
+                <div class="keypad-tab">
+
+                    <div class="dots">
+
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+
+                    </div>
+
+                </div>
+
+                <div class="tab-name">
+                    키패드
+                </div>
+
+            </div>
+
+
+            <!-- 음성 사서함 -->
+
+            <div class="tab">
+
+                <div class="voicemail">
+
+                    <div class="vm"></div>
+                    <div class="vm"></div>
+
+                </div>
+
+                <div class="tab-name">
+                    음성 사서함
+                </div>
+
+            </div>
+
 
         </div>
-
 
     </div>
 
@@ -687,47 +727,61 @@ body {
 
 <script>
 
+/* 원하는 번호 */
+const targetNumber = "01012345678";
 
-/* 실제 전화번호 */
-
-const targetNumber =
-    "01023610741";
-
-
-let currentIndex = 0;
-
+let index = 0;
 
 const display =
-    document.getElementById(
-        "display"
-    );
+    document.getElementById("number");
 
 const keypad =
-    document.getElementById(
-        "keypad"
-    );
+    document.getElementById("keypad");
 
-const callBtn =
-    document.getElementById(
-        "callBtn"
-    );
+const call =
+    document.getElementById("call");
 
 
-
-/* 키패드 클릭 */
+/* 키패드를 누르면 번호가 한 자리씩 나타남 */
 
 keypad.addEventListener(
     "click",
     () => {
 
-        if (
-            currentIndex <
-            targetNumber.length
-        ) {
+        if (index < targetNumber.length) {
 
-            currentIndex++;
+            index++;
 
-            updateDisplay();
+            let value =
+                targetNumber.substring(
+                    0,
+                    index
+                );
+
+
+            if (value.length > 3 &&
+                value.length <= 7) {
+
+                value =
+                    value.substring(0, 3)
+                    + "-"
+                    + value.substring(3);
+
+            }
+
+            else if (value.length > 7) {
+
+                value =
+                    value.substring(0, 3)
+                    + "-"
+                    + value.substring(3, 7)
+                    + "-"
+                    + value.substring(7);
+
+            }
+
+
+            display.textContent = value;
 
         }
 
@@ -735,60 +789,13 @@ keypad.addEventListener(
 );
 
 
-
-/* 번호 표시 */
-
-function updateDisplay() {
-
-    let number =
-        targetNumber.substring(
-            0,
-            currentIndex
-        );
-
-
-    if (
-        number.length > 3 &&
-        number.length <= 7
-    ) {
-
-        number =
-            number.slice(0, 3)
-            + "-"
-            + number.slice(3);
-
-    }
-
-    else if (
-        number.length > 7
-    ) {
-
-        number =
-            number.slice(0, 3)
-            + "-"
-            + number.slice(3, 7)
-            + "-"
-            + number.slice(7);
-
-    }
-
-
-    display.textContent =
-        number;
-
-}
-
-
-
 /* 전화 버튼 */
 
-callBtn.addEventListener(
+call.addEventListener(
     "click",
     () => {
 
-        if (
-            currentIndex > 0
-        ) {
+        if (index > 0) {
 
             window.location.href =
                 "tel:" + targetNumber;
@@ -800,7 +807,5 @@ callBtn.addEventListener(
 
 </script>
 
-</body>
-</html>
 </body>
 </html>
