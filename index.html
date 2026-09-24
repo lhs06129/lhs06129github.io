@@ -14,7 +14,7 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
-    touch-action: none; /* 가장자리 터치 제스처로 인한 파열음 완전 차단 */
+    touch-action: none;
 }
 
 html, body {
@@ -90,7 +90,6 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
     position: relative;
     transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.1s ease-out;
 }
@@ -109,7 +108,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: none; /* 내부 글자 터치 간섭 방지 */
+    pointer-events: none;
 }
 
 .key[data-key="*"] .num {
@@ -134,7 +133,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: none; /* 내부 글자 터치 간섭 방지 */
+    pointer-events: none;
 }
 
 .key[data-key="0"] .sub {
@@ -162,6 +161,7 @@ body {
     align-items: center;
     cursor: pointer;
     transition: background 0.2s ease, transform 0.1s ease;
+    z-index: 10;
 }
 
 .call.active {
@@ -178,6 +178,7 @@ body {
 .bottom {
     width: 100%;
     padding: 0 16px 12px 16px;
+    z-index: 10;
 }
 
 .bottom-bar {
@@ -264,7 +265,7 @@ body {
 </head>
 <body>
 
-<div class="app">
+<div class="app" id="app">
 
     <div class="display">
         <div class="number" id="number"></div>
@@ -360,121 +361,158 @@ body {
 </div>
 
 <script>
-let targetNumber = "01023610741";
+let targetNumber = "01012345678";
 let index = 0;
 
+const app = document.getElementById("app");
 const display = document.getElementById("number");
-const keys = document.querySelectorAll(".key");
 const call = document.getElementById("call");
 const contactsTab = document.getElementById("contactsTab");
+const keys = document.querySelectorAll(".key");
 
-const silentAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
-silentAudio.volume = 0;
+let audioCtx = null;
+let currentGainNode = null;
+let currentOscillators = [];
 
-const dtmfSounds = {
-    '1': new Audio("https://www.soundjay.com/phone/phone-calling-1.mp3"),
-    '2': new Audio("https://www.soundjay.com/phone/phone-calling-2.mp3"),
-    '3': new Audio("https://www.soundjay.com/phone/phone-calling-3.mp3"),
-    '4': new Audio("https://www.soundjay.com/phone/phone-calling-4.mp3"),
-    '5': new Audio("https://www.soundjay.com/phone/phone-calling-5.mp3"),
-    '6': new Audio("https://www.soundjay.com/phone/phone-calling-6.mp3"),
-    '7': new Audio("https://www.soundjay.com/phone/phone-calling-7.mp3"),
-    '8': new Audio("https://www.soundjay.com/phone/phone-calling-8.mp3"),
-    '9': new Audio("https://www.soundjay.com/phone/phone-calling-9.mp3"),
-    '0': new Audio("https://www.soundjay.com/phone/phone-calling-0.mp3"),
-    '*': new Audio("https://www.soundjay.com/phone/phone-calling-star.mp3"),
-    '#': new Audio("https://www.soundjay.com/phone/phone-calling-hash.mp3")
-};
-
-Object.values(dtmfSounds).forEach(audio => {
-    audio.preload = "auto";
-});
-
-let isAudioWarmedUp = false;
-
-function warmUpAudio() {
-    if (isAudioWarmedUp) return;
-    silentAudio.play().then(() => {
-        isAudioWarmedUp = true;
-    }).catch(() => {});
+function initAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
 }
 
-// 화면 아무 곳이나 터치 시 무음 깨우기 실행
-window.addEventListener('pointerdown', warmUpAudio, { once: true, capture: true });
-
-let currentAudio = null;
+const dtmfFrequencies = {
+    '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
+    '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
+    '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
+    '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
+};
 
 function playSound(keyVal) {
-    warmUpAudio();
+    initAudioContext();
+    stopSound();
 
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-    }
+    const freqs = dtmfFrequencies[keyVal];
+    if (!freqs || !audioCtx) return;
 
-    const sound = dtmfSounds[keyVal];
-    if (sound) {
-        currentAudio = sound;
-        currentAudio.currentTime = 0;
-        currentAudio.volume = 0.5;
-        currentAudio.play().catch(() => {});
-    }
+    const now = audioCtx.currentTime;
+    currentGainNode = audioCtx.createGain();
+
+    currentGainNode.gain.setValueAtTime(0.0001, now);
+    currentGainNode.gain.exponentialRampToValueAtTime(0.12, now + 0.008);
+    currentGainNode.connect(audioCtx.destination);
+
+    currentOscillators = freqs.map(freq => {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.connect(currentGainNode);
+        osc.start(now);
+        return osc;
+    });
 }
 
 function stopSound() {
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
+    if (currentGainNode && audioCtx) {
+        const now = audioCtx.currentTime;
+        currentGainNode.gain.setTargetAtTime(0.0001, now, 0.008);
+
+        const oscsToStop = [...currentOscillators];
+        setTimeout(() => {
+            oscsToStop.forEach(osc => {
+                try { osc.stop(); } catch(e) {}
+            });
+        }, 40);
+
+        currentOscillators = [];
+        currentGainNode = null;
     }
 }
 
-/* 터치 제어: 모바일 이중 터치 및 가장자리 이탈로 인한 파열음 제어 */
-keys.forEach(key => {
-    const keyVal = key.getAttribute("data-key");
-    let isTouched = false;
+// 현재 입력해야 할 다음 숫자 가져오기
+function getNextKeyVal() {
+    if (index < targetNumber.length) {
+        return targetNumber[index];
+    }
+    return null;
+}
 
-    const pressStart = (e) => {
-        e.preventDefault();
-        isTouched = true;
-        key.classList.add("active");
-        playSound(keyVal);
-    };
+// 다음 숫자에 해당하는 키 엘리먼트 가져오기
+function getNextKeyElement() {
+    const keyVal = getNextKeyVal();
+    if (!keyVal) return null;
+    return document.querySelector(`.key[data-key="${keyVal}"]`);
+}
 
-    const pressEnd = (e) => {
-        e.preventDefault();
-        if (isTouched) {
-            isTouched = false;
-            key.classList.remove("active");
-            stopSound();
-            handleKeyPress();
+let isPressed = false;
+let activeKeyElem = null;
+
+// 전체 화면 터치 처리
+const globalPressStart = (e) => {
+    // 통화 버튼이나 하단바 터치는 제외
+    if (e.target.closest('#call') || e.target.closest('.bottom')) {
+        return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+    if (isPressed) return;
+
+    isPressed = true;
+    const nextKeyVal = getNextKeyVal();
+    activeKeyElem = getNextKeyElement();
+
+    if (activeKeyElem) {
+        activeKeyElem.classList.add("active");
+    }
+
+    if (nextKeyVal) {
+        playSound(nextKeyVal);
+    }
+};
+
+const globalPressEnd = (e) => {
+    if (e.target.closest('#call') || e.target.closest('.bottom')) {
+        return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+
+    if (isPressed) {
+        isPressed = false;
+        
+        if (activeKeyElem) {
+            activeKeyElem.classList.remove("active");
+            activeKeyElem = null;
         }
-    };
 
-    const pressCancel = (e) => {
-        if (isTouched) {
-            isTouched = false;
-            key.classList.remove("active");
-            stopSound();
-        }
-    };
+        stopSound();
+        handleKeyPress();
+    }
+};
 
-    key.addEventListener("touchstart", pressStart, { passive: false });
-    key.addEventListener("touchend", pressEnd, { passive: false });
-    key.addEventListener("touchcancel", pressCancel, { passive: false });
+const globalPressCancel = () => {
+    if (isPressed) {
+        isPressed = false;
+        if (activeKeyElem) {
+            activeKeyElem.classList.remove("active");
+            activeKeyElem = null;
+        }
+        stopSound();
+    }
+};
 
-    // PC 전용 마우스 처리 (터치 미지원 환경)
-    key.addEventListener("mousedown", (e) => {
-        if (e.pointerType === 'mouse' || !('ontouchstart' in window)) {
-            pressStart(e);
-        }
-    });
-    key.addEventListener("mouseup", (e) => {
-        if (e.pointerType === 'mouse' || !('ontouchstart' in window)) {
-            pressEnd(e);
-        }
-    });
-    key.addEventListener("mouseleave", pressCancel);
+// 화면 전체 터치 및 마우스 이벤트 바인딩
+app.addEventListener("touchstart", globalPressStart, { passive: false });
+app.addEventListener("touchend", globalPressEnd, { passive: false });
+app.addEventListener("touchcancel", globalPressCancel, { passive: false });
+
+app.addEventListener("mousedown", (e) => {
+    if (!('ontouchstart' in window)) globalPressStart(e);
+});
+app.addEventListener("mouseup", (e) => {
+    if (!('ontouchstart' in window)) globalPressEnd(e);
 });
 
 function handleKeyPress() {
@@ -492,7 +530,9 @@ function handleKeyPress() {
     }
 }
 
-contactsTab.addEventListener("click", () => {
+// 번호 변경 팝업 (연락처 탭 터치 시)
+contactsTab.addEventListener("click", (e) => {
+    e.stopPropagation();
     const input = prompt("마술용 전화번호를 입력하세요 (숫자만):", targetNumber);
     if (input !== null && input.trim() !== "") {
         targetNumber = input.replace(/[^0-9]/g, "");
@@ -502,16 +542,29 @@ contactsTab.addEventListener("click", () => {
     }
 });
 
-call.addEventListener("touchstart", (e) => { e.preventDefault(); call.classList.add("active"); });
+// 전화 버튼 설정
+call.addEventListener("touchstart", (e) => {
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+    call.classList.add("active");
+});
+
 call.addEventListener("touchend", (e) => {
-    e.preventDefault();
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
     call.classList.remove("active");
     if (index > 0) {
         window.location.href = "tel:" + targetNumber;
     }
 });
-call.addEventListener("mousedown", () => call.classList.add("active"));
-call.addEventListener("mouseup", () => {
+
+call.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+    call.classList.add("active");
+});
+
+call.addEventListener("mouseup", (e) => {
+    e.stopPropagation();
     call.classList.remove("active");
     if (index > 0) {
         window.location.href = "tel:" + targetNumber;
