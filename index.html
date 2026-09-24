@@ -20,7 +20,6 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
-    touch-action: none;
 }
 
 html, body {
@@ -46,6 +45,7 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* 상단 여백 및 숫자 표시 영역: 클릭 방지 설정 */
 .display {
     flex: 1;
     display: flex;
@@ -53,6 +53,7 @@ body {
     justify-content: center;
     padding-bottom: 20px;
     min-height: 80px;
+    pointer-events: none; 
 }
 
 .number {
@@ -97,14 +98,25 @@ body {
     justify-content: center;
     align-items: center;
     position: relative;
-    transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.1s ease-out;
+    cursor: pointer;
+    transition: background 0.15s ease-out, color 0.15s ease-out, transform 0.1s ease-out;
 }
 
-.key.active {
+/* 버튼 주위 여백으로도 부드럽게 눌리도록 가상의 확장 터치 영역 부여 */
+.key::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    bottom: -8px;
+    left: -8px;
+    right: -8px;
+    border-radius: 50%;
+}
+
+.key:active, .key.active {
     background: #e5e5ea;
     color: #000000;
-    transform: scale(0.96);
-    transition: none;
+    transform: scale(0.94);
 }
 
 .num {
@@ -149,6 +161,7 @@ body {
     letter-spacing: 0;
 }
 
+/* 통화 영역 전체는 기본 클릭 방지 처리 (양옆 빈 공간 클릭 시 번호가 안 올라가게 함) */
 .call-area {
     width: 100%;
     margin-top: 18px;
@@ -157,8 +170,10 @@ body {
     justify-content: center;
     align-items: center;
     position: relative;
+    pointer-events: none; 
 }
 
+/* 초록색 통화 버튼 자체는 다시 클릭 가능하도록 허용 */
 .call {
     width: 75px;
     height: 75px;
@@ -170,9 +185,10 @@ body {
     cursor: pointer;
     transition: background 0.2s ease, transform 0.1s ease;
     z-index: 10;
+    pointer-events: auto; /* 빈공간은 막고 버튼만 클릭 허용 */
 }
 
-.call.active {
+.call:active {
     background: #248a3d;
     transform: scale(0.92);
 }
@@ -183,7 +199,7 @@ body {
     pointer-events: none;
 }
 
-/* 지우기 버튼 스타일 */
+/* 지우기 버튼도 클릭 허용 */
 .delete-btn {
     position: absolute;
     right: 10px;
@@ -196,6 +212,7 @@ body {
     z-index: 10;
     opacity: 0.8;
     transition: opacity 0.1s ease;
+    pointer-events: auto; /* 양옆 빈공간은 막고 지우기 버튼만 클릭 허용 */
 }
 
 .delete-btn:active {
@@ -334,7 +351,6 @@ body {
                     <path fill="white" d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C9.61 21 3 14.39 3 6c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.45 2.2z"/>
                 </svg>
             </div>
-            <!-- 지우기 버튼 추가 -->
             <div class="delete-btn" id="deleteBtn">
                 <svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 2L2 12L10 22H28C29.1046 22 30 21.1046 30 20V4C30 2.89543 29.1046 2 28 2H10Z" fill="#3A3A3C"/>
@@ -404,7 +420,6 @@ body {
 let targetNumber = "01012345678";
 let index = 0;
 
-const app = document.getElementById("app");
 const display = document.getElementById("number");
 const call = document.getElementById("call");
 const deleteBtn = document.getElementById("deleteBtn");
@@ -476,109 +491,6 @@ function stopSound() {
     }
 }
 
-function getSoundKeyVal(pressedKeyElem) {
-    if (index < targetNumber.length) {
-        return targetNumber[index];
-    }
-    return pressedKeyElem ? pressedKeyElem.getAttribute("data-key") : '1';
-}
-
-function getNearestKeyElement(x, y) {
-    let minDistance = Infinity;
-    let nearestKey = null;
-
-    keys.forEach(key => {
-        const rect = key.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-
-        const distance = Math.hypot(centerX - x, centerY - y);
-        if (distance < minDistance) {
-            minDistance = distance;
-            nearestKey = key;
-        }
-    });
-
-    return nearestKey;
-}
-
-let isPressed = false;
-let activeKeyElem = null;
-
-const globalPressStart = (e) => {
-    if (e.target.closest('#call') || e.target.closest('#deleteBtn') || e.target.closest('.bottom')) {
-        return;
-    }
-
-    if (e.cancelable) e.preventDefault();
-    if (isPressed) return;
-
-    ensureAudioContext();
-
-    isPressed = true;
-
-    let clientX, clientY;
-    if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-    } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-    }
-
-    activeKeyElem = getNearestKeyElement(clientX, clientY);
-    if (activeKeyElem) {
-        activeKeyElem.classList.add("active");
-    }
-
-    const keyValToPlay = getSoundKeyVal(activeKeyElem);
-    if (keyValToPlay) {
-        playSound(keyValToPlay);
-    }
-};
-
-const globalPressEnd = (e) => {
-    if (e.target.closest('#call') || e.target.closest('#deleteBtn') || e.target.closest('.bottom')) {
-        return;
-    }
-
-    if (e.cancelable) e.preventDefault();
-
-    if (isPressed) {
-        isPressed = false;
-        
-        if (activeKeyElem) {
-            activeKeyElem.classList.remove("active");
-            activeKeyElem = null;
-        }
-
-        stopSound();
-        handleKeyPress();
-    }
-};
-
-const globalPressCancel = () => {
-    if (isPressed) {
-        isPressed = false;
-        if (activeKeyElem) {
-            activeKeyElem.classList.remove("active");
-            activeKeyElem = null;
-        }
-        stopSound();
-    }
-};
-
-app.addEventListener("touchstart", globalPressStart, { passive: false });
-app.addEventListener("touchend", globalPressEnd, { passive: false });
-app.addEventListener("touchcancel", globalPressCancel, { passive: false });
-
-app.addEventListener("mousedown", (e) => {
-    if (!('ontouchstart' in window)) globalPressStart(e);
-});
-app.addEventListener("mouseup", (e) => {
-    if (!('ontouchstart' in window)) globalPressEnd(e);
-});
-
 function updateDisplay() {
     if (index === 0) {
         display.textContent = "";
@@ -597,34 +509,35 @@ function updateDisplay() {
     }
 }
 
-function handleKeyPress() {
-    if (index < targetNumber.length) {
-        index++;
-        updateDisplay();
-    }
-}
+// 각 키패드 개별 클릭 이벤트 적용 (숫자 주위 여백은 자연스럽게 터치 허용)
+keys.forEach(key => {
+    const keyVal = key.getAttribute("data-key");
 
-// 지우기 버튼 이벤트
-function handleDelete() {
+    key.addEventListener("click", () => {
+        let soundVal = keyVal;
+        if (index < targetNumber.length) {
+            soundVal = targetNumber[index];
+        }
+        playSound(soundVal);
+        setTimeout(stopSound, 150);
+
+        if (index < targetNumber.length) {
+            index++;
+            updateDisplay();
+        }
+    });
+});
+
+// 지우기 버튼
+deleteBtn.addEventListener("click", () => {
     if (index > 0) {
         index--;
         updateDisplay();
     }
-}
-
-deleteBtn.addEventListener("touchstart", (e) => {
-    e.stopPropagation();
-    if (e.cancelable) e.preventDefault();
-    handleDelete();
 });
 
-deleteBtn.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-    handleDelete();
-});
-
-contactsTab.addEventListener("click", (e) => {
-    e.stopPropagation();
+// 번호 변경 (연락처 탭)
+contactsTab.addEventListener("click", () => {
     const input = prompt("마술용 전화번호를 입력하세요 (숫자만):", targetNumber);
     if (input !== null && input.trim() !== "") {
         targetNumber = input.replace(/[^0-9]/g, "");
@@ -634,29 +547,8 @@ contactsTab.addEventListener("click", (e) => {
     }
 });
 
-call.addEventListener("touchstart", (e) => {
-    e.stopPropagation();
-    if (e.cancelable) e.preventDefault();
-    call.classList.add("active");
-});
-
-call.addEventListener("touchend", (e) => {
-    e.stopPropagation();
-    if (e.cancelable) e.preventDefault();
-    call.classList.remove("active");
-    if (index > 0) {
-        window.location.href = "tel:" + targetNumber;
-    }
-});
-
-call.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-    call.classList.add("active");
-});
-
-call.addEventListener("mouseup", (e) => {
-    e.stopPropagation();
-    call.classList.remove("active");
+// 통화 버튼
+call.addEventListener("click", () => {
     if (index > 0) {
         window.location.href = "tel:" + targetNumber;
     }
