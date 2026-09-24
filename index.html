@@ -92,32 +92,58 @@ body {
     justify-content: center;
     align-items: center;
     cursor: pointer;
-
-    /* 손을 떼었을 때 부드럽게 원래 색으로 복귀하는 트랜지션 */
+    position: relative;
     transition: background 0.25s ease-out, color 0.25s ease-out, transform 0.1s ease-out;
 }
 
-/* iOS 키패드 눌림 모션 (누르고 있는 순간 즉시 반응) */
 .key.active {
     background: #e5e5ea;
     color: #000000;
     transform: scale(0.96);
-    transition: none; /* 누를 때는 즉각 반응하도록 트랜지션 제거 */
+    transition: none;
 }
 
 .num {
     font-size: 36px;
     font-weight: 300;
     line-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* 특수기호 별(*) 정밀 중앙 정렬 보정 */
+.key[data-key="*"] .num {
+    font-size: 42px;
+    line-height: 1;
+    transform: translateY(7px);
+}
+
+/* 특수기호 샵(#) 정밀 위치 보정 */
+.key[data-key="#"] .num {
+    font-size: 32px;
+    line-height: 1;
+    transform: translateY(1px);
+}
+
+/* 알파벳 서브 텍스트 */
 .sub {
     margin-top: 2px;
     font-size: 10px;
     font-weight: 600;
     line-height: 10px;
-    letter-spacing: 2px;
+    letter-spacing: 0.5px;
     height: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* + 기호 크기 및 위치 맞춤 */
+.key[data-key="0"] .sub {
+    font-size: 14px;
+    font-weight: 400;
+    margin-top: 0px;
 }
 
 /* 통화 버튼 */
@@ -241,33 +267,31 @@ body {
 
 <div class="app">
 
-    <!-- 상단 전화번호 표시 -->
     <div class="display">
         <div class="number" id="number"></div>
     </div>
 
-    <!-- 키패드 및 통화 버튼 영역 -->
     <div class="main-content">
         <div class="keypad" id="keypad">
             <div class="row">
-                <div class="key"><div class="num">1</div><div class="sub"></div></div>
-                <div class="key"><div class="num">2</div><div class="sub">A B C</div></div>
-                <div class="key"><div class="num">3</div><div class="sub">D E F</div></div>
+                <div class="key" data-key="1"><div class="num">1</div><div class="sub"></div></div>
+                <div class="key" data-key="2"><div class="num">2</div><div class="sub">ABC</div></div>
+                <div class="key" data-key="3"><div class="num">3</div><div class="sub">DEF</div></div>
             </div>
             <div class="row">
-                <div class="key"><div class="num">4</div><div class="sub">G H I</div></div>
-                <div class="key"><div class="num">5</div><div class="sub">J K L</div></div>
-                <div class="key"><div class="num">6</div><div class="sub">M N O</div></div>
+                <div class="key" data-key="4"><div class="num">4</div><div class="sub">GHI</div></div>
+                <div class="key" data-key="5"><div class="num">5</div><div class="sub">JKL</div></div>
+                <div class="key" data-key="6"><div class="num">6</div><div class="sub">MNO</div></div>
             </div>
             <div class="row">
-                <div class="key"><div class="num">7</div><div class="sub">P Q R S</div></div>
-                <div class="key"><div class="num">8</div><div class="sub">T U V</div></div>
-                <div class="key"><div class="num">9</div><div class="sub">W X Y Z</div></div>
+                <div class="key" data-key="7"><div class="num">7</div><div class="sub">PQRS</div></div>
+                <div class="key" data-key="8"><div class="num">8</div><div class="sub">TUV</div></div>
+                <div class="key" data-key="9"><div class="num">9</div><div class="sub">WXYZ</div></div>
             </div>
             <div class="row">
-                <div class="key"><div class="num">*</div><div class="sub"></div></div>
-                <div class="key"><div class="num">0</div><div class="sub">+</div></div>
-                <div class="key"><div class="num">#</div><div class="sub"></div></div>
+                <div class="key" data-key="*"><div class="num">*</div><div class="sub"></div></div>
+                <div class="key" data-key="0"><div class="num">0</div><div class="sub">+</div></div>
+                <div class="key" data-key="#"><div class="num">#</div><div class="sub"></div></div>
             </div>
         </div>
 
@@ -280,7 +304,6 @@ body {
         </div>
     </div>
 
-    <!-- 하단 메뉴 -->
     <div class="bottom">
         <div class="bottom-bar">
             <div class="tab">
@@ -338,31 +361,81 @@ body {
 </div>
 
 <script>
-const targetNumber = "01023610741";
+const targetNumber = "01012345678";
 let index = 0;
 
 const display = document.getElementById("number");
 const keys = document.querySelectorAll(".key");
 const call = document.getElementById("call");
 
-// 버튼 터치 모션 이벤트 등록 (iOS 스타일 반응성 확보)
+/* Web Audio API를 이용한 DTMF 키패드 사운드 구현 */
+let audioCtx = null;
+let currentOscillators = [];
+
+const dtmfFrequencies = {
+    '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
+    '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
+    '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
+    '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
+};
+
+function playDTMF(keyVal) {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    stopDTMF();
+
+    const freqs = dtmfFrequencies[keyVal];
+    if (!freqs) return;
+
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gainNode.connect(audioCtx.destination);
+
+    currentOscillators = freqs.map(freq => {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.connect(gainNode);
+        osc.start();
+        return osc;
+    });
+}
+
+function stopDTMF() {
+    if (currentOscillators.length > 0) {
+        currentOscillators.forEach(osc => {
+            try { osc.stop(); } catch(e) {}
+        });
+        currentOscillators = [];
+    }
+}
+
 keys.forEach(key => {
+    const keyVal = key.getAttribute("data-key");
+
     const pressStart = () => {
         key.classList.add("active");
+        playDTMF(keyVal);
     };
 
     const pressEnd = () => {
         if (key.classList.contains("active")) {
             key.classList.remove("active");
+            stopDTMF();
             handleKeyPress();
         }
     };
 
     const pressCancel = () => {
         key.classList.remove("active");
+        stopDTMF();
     };
 
-    // 터치 및 마우스 이벤트 처리
     key.addEventListener("touchstart", (e) => { e.preventDefault(); pressStart(); });
     key.addEventListener("touchend", (e) => { e.preventDefault(); pressEnd(); });
     key.addEventListener("touchcancel", pressCancel);
@@ -372,7 +445,6 @@ keys.forEach(key => {
     key.addEventListener("mouseleave", pressCancel);
 });
 
-// 전화번호 입력 로직
 function handleKeyPress() {
     if (index < targetNumber.length) {
         index++;
@@ -388,7 +460,6 @@ function handleKeyPress() {
     }
 }
 
-// 통화 버튼 클릭 모션
 call.addEventListener("touchstart", (e) => { e.preventDefault(); call.classList.add("active"); });
 call.addEventListener("touchend", (e) => {
     e.preventDefault();
