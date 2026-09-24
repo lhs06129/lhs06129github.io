@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="전화">
+
+<!-- 순정 iOS 전화 앱 아이콘 -->
+<link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Phone_iOS.png/512px-Phone_iOS.png">
+<link rel="apple-touch-icon-precomposed" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Phone_iOS.png/512px-Phone_iOS.png">
 
 <title>전화</title>
 <style>
@@ -147,11 +150,13 @@ body {
 }
 
 .call-area {
+    width: 100%;
     margin-top: 18px;
     margin-bottom: 24px;
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
 }
 
 .call {
@@ -175,6 +180,31 @@ body {
 .call svg {
     width: 34px;
     height: 34px;
+    pointer-events: none;
+}
+
+/* 지우기 버튼 스타일 */
+.delete-btn {
+    position: absolute;
+    right: 10px;
+    width: 50px;
+    height: 50px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0.8;
+    transition: opacity 0.1s ease;
+}
+
+.delete-btn:active {
+    opacity: 0.4;
+}
+
+.delete-btn svg {
+    width: 36px;
+    height: 36px;
     pointer-events: none;
 }
 
@@ -304,6 +334,13 @@ body {
                     <path fill="white" d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C9.61 21 3 14.39 3 6c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.45 2.2z"/>
                 </svg>
             </div>
+            <!-- 지우기 버튼 추가 -->
+            <div class="delete-btn" id="deleteBtn">
+                <svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 2L2 12L10 22H28C29.1046 22 30 21.1046 30 20V4C30 2.89543 29.1046 2 28 2H10Z" fill="#3A3A3C"/>
+                    <path d="M14 8L22 16M22 8L14 16" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+            </div>
         </div>
     </div>
 
@@ -369,8 +406,8 @@ let index = 0;
 
 const app = document.getElementById("app");
 const display = document.getElementById("number");
-const keypad = document.getElementById("keypad");
 const call = document.getElementById("call");
+const deleteBtn = document.getElementById("deleteBtn");
 const contactsTab = document.getElementById("contactsTab");
 const keys = document.querySelectorAll(".key");
 
@@ -446,7 +483,6 @@ function getSoundKeyVal(pressedKeyElem) {
     return pressedKeyElem ? pressedKeyElem.getAttribute("data-key") : '1';
 }
 
-// 키패드 영역 내에서 가장 가까운 키를 찾는 함수 (거리 제한 없이 키패드 내 영역 커버)
 function getNearestKeyElement(x, y) {
     let minDistance = Infinity;
     let nearestKey = null;
@@ -470,6 +506,17 @@ let isPressed = false;
 let activeKeyElem = null;
 
 const globalPressStart = (e) => {
+    if (e.target.closest('#call') || e.target.closest('#deleteBtn') || e.target.closest('.bottom')) {
+        return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+    if (isPressed) return;
+
+    ensureAudioContext();
+
+    isPressed = true;
+
     let clientX, clientY;
     if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
@@ -478,26 +525,6 @@ const globalPressStart = (e) => {
         clientX = e.clientX;
         clientY = e.clientY;
     }
-
-    // 터치한 위치가 실제 키패드 사각형(영역) 내부에 있는지 검증
-    const keypadRect = keypad.getBoundingClientRect();
-    const isInsideKeypad = (
-        clientX >= keypadRect.left &&
-        clientX <= keypadRect.right &&
-        clientY >= keypadRect.top &&
-        clientY <= keypadRect.bottom
-    );
-
-    // 키패드 바깥(맨 위 숫자가 찍히는 부분, 통화 버튼 주변 빈 영역 등)을 누른 경우 완전히 무시
-    if (!isInsideKeypad) {
-        return;
-    }
-
-    if (e.cancelable) e.preventDefault();
-    if (isPressed) return;
-
-    ensureAudioContext();
-    isPressed = true;
 
     activeKeyElem = getNearestKeyElement(clientX, clientY);
     if (activeKeyElem) {
@@ -511,8 +538,13 @@ const globalPressStart = (e) => {
 };
 
 const globalPressEnd = (e) => {
+    if (e.target.closest('#call') || e.target.closest('#deleteBtn') || e.target.closest('.bottom')) {
+        return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+
     if (isPressed) {
-        if (e.cancelable) e.preventDefault();
         isPressed = false;
         
         if (activeKeyElem) {
@@ -547,9 +579,12 @@ app.addEventListener("mouseup", (e) => {
     if (!('ontouchstart' in window)) globalPressEnd(e);
 });
 
-function handleKeyPress() {
-    if (index < targetNumber.length) {
-        index++;
+function updateDisplay() {
+    if (index === 0) {
+        display.textContent = "";
+        deleteBtn.style.display = "none";
+    } else {
+        deleteBtn.style.display = "flex";
         let value = targetNumber.substring(0, index);
 
         if (value.length > 3 && value.length <= 7) {
@@ -562,13 +597,39 @@ function handleKeyPress() {
     }
 }
 
+function handleKeyPress() {
+    if (index < targetNumber.length) {
+        index++;
+        updateDisplay();
+    }
+}
+
+// 지우기 버튼 이벤트
+function handleDelete() {
+    if (index > 0) {
+        index--;
+        updateDisplay();
+    }
+}
+
+deleteBtn.addEventListener("touchstart", (e) => {
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+    handleDelete();
+});
+
+deleteBtn.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+    handleDelete();
+});
+
 contactsTab.addEventListener("click", (e) => {
     e.stopPropagation();
     const input = prompt("마술용 전화번호를 입력하세요 (숫자만):", targetNumber);
     if (input !== null && input.trim() !== "") {
         targetNumber = input.replace(/[^0-9]/g, "");
         index = 0;
-        display.textContent = "";
+        updateDisplay();
         alert("전화번호가 " + targetNumber + " (으)로 변경되었습니다.");
     }
 });
