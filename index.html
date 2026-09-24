@@ -99,7 +99,7 @@ body {
     align-items: center;
     position: relative;
     cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
+    transition: background 0.08s ease, color 0.08s ease, transform 0.08s ease;
 }
 
 /* 버튼 주위 여백으로도 부드럽게 눌리도록 가상의 확장 터치 영역 부여 */
@@ -113,12 +113,11 @@ body {
     border-radius: 50%;
 }
 
-/* 숫자가 눌렸을 때 아이폰 스타일의 하얀색 전환 애니메이션 효과 */
-.key:active, .key.active {
+/* 모바일/PC 모두에서 확실하게 적용되는 눌림 효과 클래스 */
+.key.touched, .key:active {
     background: #e5e5ea !important;
     color: #000000 !important;
     transform: scale(0.94);
-    transition: background 0.05s ease, color 0.05s ease, transform 0.05s ease;
 }
 
 .num {
@@ -511,11 +510,19 @@ function updateDisplay() {
     }
 }
 
-// 각 키패드 개별 클릭 이벤트 적용 (숫자 주위 여백 터치 허용 + 애니메이션)
+// 모바일 터치 이벤트 시 즉각적으로 하얀색 애니메이션(touched 클래스) 적용
 keys.forEach(key => {
     const keyVal = key.getAttribute("data-key");
 
-    key.addEventListener("click", () => {
+    const triggerAction = (e) => {
+        e.preventDefault(); // 더블탭 줌이나 불필요한 기본 터치 동작 방지
+        
+        // 터치 효과 강제 부여
+        key.classList.add("touched");
+        setTimeout(() => {
+            key.classList.remove("touched");
+        }, 150);
+
         let soundVal = keyVal;
         if (index < targetNumber.length) {
             soundVal = targetNumber[index];
@@ -526,6 +533,15 @@ keys.forEach(key => {
         if (index < targetNumber.length) {
             index++;
             updateDisplay();
+        }
+    };
+
+    // 모바일 터치와 PC 마우스 클릭 모두 완벽 지원
+    key.addEventListener("touchstart", triggerAction, { passive: false });
+    key.addEventListener("click", (e) => {
+        // 모바일 브라우저에서 touchstart와 click이 중 중복 실행되는 것 방지
+        if (e.pointerType === 'mouse' || !window.TouchEvent) {
+            triggerAction(e);
         }
     });
 });
