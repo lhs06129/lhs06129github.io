@@ -1,4 +1,375 @@
-// 기존 사운드 관련 변수 및 함수 교체
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>전화</title>
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    color: white;
+}
+
+.app {
+    width: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #000;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.display {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 20px;
+    min-height: 80px;
+}
+
+.number {
+    height: 48px;
+    font-size: 36px;
+    font-weight: 300;
+    line-height: 48px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    color: #fff;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0 13%;
+}
+
+.keypad {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.row {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.key {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    background: #1c1c1e;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.1s ease-out;
+}
+
+.key.active {
+    background: #e5e5ea;
+    color: #000000;
+    transform: scale(0.96);
+    transition: none;
+}
+
+.num {
+    font-size: 36px;
+    font-weight: 300;
+    line-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.key[data-key="*"] .num {
+    font-size: 40px;
+    line-height: 1;
+    transform: translateY(11px);
+}
+
+.key[data-key="#"] .num {
+    font-size: 32px;
+    line-height: 1;
+    transform: translateY(4px);
+}
+
+.sub {
+    margin-top: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 10px;
+    letter-spacing: 1.5px;
+    height: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.key[data-key="0"] .sub {
+    font-size: 14px;
+    font-weight: 400;
+    margin-top: 0px;
+    letter-spacing: 0;
+}
+
+.call-area {
+    margin-top: 18px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.call {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    background: #34c759;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    z-index: 10;
+}
+
+.call.active {
+    background: #248a3d;
+    transform: scale(0.92);
+}
+
+.call svg {
+    width: 34px;
+    height: 34px;
+    pointer-events: none;
+}
+
+.bottom {
+    width: 100%;
+    padding: 0 16px 12px 16px;
+    z-index: 10;
+}
+
+.bottom-bar {
+    width: 100%;
+    height: 68px;
+    border-radius: 34px;
+    background: #1c1c1e;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.tab {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+}
+
+.tab-icon {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.tab-name {
+    font-size: 11px;
+    font-weight: 400;
+    color: #8e8e93;
+    pointer-events: none;
+}
+
+.tab.selected .tab-name {
+    color: #2997ff;
+}
+
+.selected-bg {
+    width: 58px;
+    height: 34px;
+    background: #2c2c2e;
+    border-radius: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dots-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 6px);
+    grid-gap: 3px;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2997ff;
+}
+
+@media (max-height: 700px) {
+    .key, .call {
+        width: 65px;
+        height: 65px;
+    }
+    .num {
+        font-size: 30px;
+    }
+    .keypad {
+        gap: 12px;
+    }
+    .call-area {
+        margin-top: 12px;
+        margin-bottom: 16px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+    <div class="display">
+        <div class="number" id="number"></div>
+    </div>
+
+    <div class="main-content">
+        <div class="keypad" id="keypad">
+            <div class="row">
+                <div class="key" data-key="1"><div class="num">1</div><div class="sub"></div></div>
+                <div class="key" data-key="2"><div class="num">2</div><div class="sub">ABC</div></div>
+                <div class="key" data-key="3"><div class="num">3</div><div class="sub">DEF</div></div>
+            </div>
+            <div class="row">
+                <div class="key" data-key="4"><div class="num">4</div><div class="sub">GHI</div></div>
+                <div class="key" data-key="5"><div class="num">5</div><div class="sub">JKL</div></div>
+                <div class="key" data-key="6"><div class="num">6</div><div class="sub">MNO</div></div>
+            </div>
+            <div class="row">
+                <div class="key" data-key="7"><div class="num">7</div><div class="sub">PQRS</div></div>
+                <div class="key" data-key="8"><div class="num">8</div><div class="sub">TUV</div></div>
+                <div class="key" data-key="9"><div class="num">9</div><div class="sub">WXYZ</div></div>
+            </div>
+            <div class="row">
+                <div class="key" data-key="*"><div class="num">*</div><div class="sub"></div></div>
+                <div class="key" data-key="0"><div class="num">0</div><div class="sub">+</div></div>
+                <div class="key" data-key="#"><div class="num">#</div><div class="sub"></div></div>
+            </div>
+        </div>
+
+        <div class="call-area">
+            <div class="call" id="call">
+                <svg viewBox="0 0 24 24">
+                    <path fill="white" d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C9.61 21 3 14.39 3 6c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.45 2.2z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom">
+        <div class="bottom-bar">
+            <div class="tab">
+                <div class="tab-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                </div>
+                <div class="tab-name">즐겨찾기</div>
+            </div>
+
+            <div class="tab">
+                <div class="tab-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div class="tab-name">최근 통화</div>
+            </div>
+
+            <div class="tab" id="contactsTab">
+                <div class="tab-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </div>
+                <div class="tab-name">연락처</div>
+            </div>
+
+            <div class="tab selected">
+                <div class="selected-bg">
+                    <div class="dots-grid">
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                    </div>
+                </div>
+                <div class="tab-name">키패드</div>
+            </div>
+
+            <div class="tab">
+                <div class="tab-icon">
+                    <svg width="28" height="18" viewBox="0 0 28 18" fill="none" stroke="white" stroke-width="2">
+                        <circle cx="6" cy="9" r="5"></circle>
+                        <circle cx="22" cy="9" r="5"></circle>
+                        <line x1="6" y1="14" x2="22" y2="14"></line>
+                    </svg>
+                </div>
+                <div class="tab-name">음성 사서함</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let targetNumber = "01012345678";
+let index = 0;
+
+const app = document.getElementById("app");
+const display = document.getElementById("number");
+const call = document.getElementById("call");
+const contactsTab = document.getElementById("contactsTab");
+const keys = document.querySelectorAll(".key");
+
 let audioCtx = null;
 let currentGainNode = null;
 let currentOscillators = [];
@@ -21,23 +392,21 @@ const dtmfFrequencies = {
 
 function playSound(keyVal) {
     ensureAudioContext();
-    stopSound(); // 이전 소리가 남아있다면 정리가 완전히 끝난 후 재생
+    stopSound();
 
     const freqs = dtmfFrequencies[keyVal];
     if (!freqs || !audioCtx) return;
 
     const now = audioCtx.currentTime;
     
-    // GainNode(부드러운 볼륨 조절기) 생성
     currentGainNode = audioCtx.createGain();
 
-    // 시작 시 0에서 0.025초 동안 0.08 볼륨으로 자연스럽게 페이드 인
+    // 부드러운 페이드 인 (Fade In) - 0.025초 동안 음량 상승
     currentGainNode.gain.setValueAtTime(0, now);
-    currentGainNode.gain.linearRampToValueAtTime(0.08, now + 0.025); 
+    currentGainNode.gain.linearRampToValueAtTime(0.08, now + 0.025);
     
     currentGainNode.connect(audioCtx.destination);
 
-    // 오실레이터 생성
     currentOscillators = freqs.map(freq => {
         const osc = audioCtx.createOscillator();
         osc.type = 'sine';
@@ -51,9 +420,8 @@ function playSound(keyVal) {
 function stopSound() {
     if (currentGainNode && audioCtx) {
         const now = audioCtx.currentTime;
-        const fadeTime = 0.03; // 0.03초 동안 부드럽게 감쇄(Fade Out)
+        const fadeTime = 0.03; // 부드러운 페이드 아웃 (Fade Out) - 0.03초 동안 감쇄
 
-        // 쨍하는 소리가 나지 않도록 볼륨을 0으로 부드럽게 깎음
         currentGainNode.gain.cancelScheduledValues(now);
         currentGainNode.gain.setValueAtTime(currentGainNode.gain.value, now);
         currentGainNode.gain.linearRampToValueAtTime(0, now + fadeTime);
@@ -69,3 +437,164 @@ function stopSound() {
         currentGainNode = null;
     }
 }
+
+function getNextKeyVal() {
+    if (index < targetNumber.length) {
+        return targetNumber[index];
+    }
+    return null;
+}
+
+function getNearestKeyElement(x, y) {
+    let minDistance = Infinity;
+    let nearestKey = null;
+
+    keys.forEach(key => {
+        const rect = key.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const distance = Math.hypot(centerX - x, centerY - y);
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearestKey = key;
+        }
+    });
+
+    return nearestKey;
+}
+
+let isPressed = false;
+let activeKeyElem = null;
+
+const globalPressStart = (e) => {
+    if (e.target.closest('#call') || e.target.closest('.bottom')) {
+        return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+    if (isPressed) return;
+
+    ensureAudioContext();
+
+    isPressed = true;
+
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+
+    activeKeyElem = getNearestKeyElement(clientX, clientY);
+    if (activeKeyElem) {
+        activeKeyElem.classList.add("active");
+    }
+
+    const nextKeyVal = getNextKeyVal();
+    if (nextKeyVal) {
+        playSound(nextKeyVal);
+    }
+};
+
+const globalPressEnd = (e) => {
+    if (e.target.closest('#call') || e.target.closest('.bottom')) {
+        return;
+    }
+
+    if (e.cancelable) e.preventDefault();
+
+    if (isPressed) {
+        isPressed = false;
+        
+        if (activeKeyElem) {
+            activeKeyElem.classList.remove("active");
+            activeKeyElem = null;
+        }
+
+        stopSound();
+        handleKeyPress();
+    }
+};
+
+const globalPressCancel = () => {
+    if (isPressed) {
+        isPressed = false;
+        if (activeKeyElem) {
+            activeKeyElem.classList.remove("active");
+            activeKeyElem = null;
+        }
+        stopSound();
+    }
+};
+
+app.addEventListener("touchstart", globalPressStart, { passive: false });
+app.addEventListener("touchend", globalPressEnd, { passive: false });
+app.addEventListener("touchcancel", globalPressCancel, { passive: false });
+
+app.addEventListener("mousedown", (e) => {
+    if (!('ontouchstart' in window)) globalPressStart(e);
+});
+app.addEventListener("mouseup", (e) => {
+    if (!('ontouchstart' in window)) globalPressEnd(e);
+});
+
+function handleKeyPress() {
+    if (index < targetNumber.length) {
+        index++;
+        let value = targetNumber.substring(0, index);
+
+        if (value.length > 3 && value.length <= 7) {
+            value = value.substring(0, 3) + "-" + value.substring(3);
+        } else if (value.length > 7) {
+            value = value.substring(0, 3) + "-" + value.substring(3, 7) + "-" + value.substring(7);
+        }
+
+        display.textContent = value;
+    }
+}
+
+contactsTab.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const input = prompt("마술용 전화번호를 입력하세요 (숫자만):", targetNumber);
+    if (input !== null && input.trim() !== "") {
+        targetNumber = input.replace(/[^0-9]/g, "");
+        index = 0;
+        display.textContent = "";
+        alert("전화번호가 " + targetNumber + " (으)로 변경되었습니다.");
+    }
+});
+
+call.addEventListener("touchstart", (e) => {
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+    call.classList.add("active");
+});
+
+call.addEventListener("touchend", (e) => {
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+    call.classList.remove("active");
+    if (index > 0) {
+        window.location.href = "tel:" + targetNumber;
+    }
+});
+
+call.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+    call.classList.add("active");
+});
+
+call.addEventListener("mouseup", (e) => {
+    e.stopPropagation();
+    call.classList.remove("active");
+    if (index > 0) {
+        window.location.href = "tel:" + targetNumber;
+    }
+});
+</script>
+
+</body>
+</html>
