@@ -10,91 +10,90 @@
                user-scalable=no,
                viewport-fit=cover">
 
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
 <title>전화</title>
 
 <style>
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html,
 body {
     width: 100%;
     height: 100%;
-    background: #000;
     overflow: hidden;
+    background: #000;
 }
 
 body {
-    color: #fff;
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         "SF Pro Display",
-        "SF Pro Text",
         "Helvetica Neue",
         Arial,
         sans-serif;
+
+    color: white;
+}
+
+.app {
+    width: 100%;
+    height: 100dvh;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #000;
 
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
 }
 
 
-/* =========================================
-   전체 화면
-========================================= */
+/* =====================================
+   번호 표시
+===================================== */
 
-.phone-app {
-    width: 100%;
-    height: 100%;
-
-    display: flex;
-    flex-direction: column;
-
-    background: #000;
-}
-
-
-/* =========================================
-   번호 표시 영역
-========================================= */
-
-.number-area {
-    height: 27%;
+.display {
+    height: 30%;
 
     display: flex;
-    justify-content: center;
     align-items: flex-end;
+    justify-content: center;
 
-    padding-bottom: 24px;
+    padding-bottom: 25px;
 }
 
 .number {
-    min-height: 45px;
+    height: 48px;
 
-    font-size: 38px;
+    font-size: 37px;
     font-weight: 300;
 
+    line-height: 48px;
     letter-spacing: 1px;
-    line-height: 45px;
 
-    text-align: center;
+    white-space: nowrap;
 }
 
 
-/* =========================================
+/* =====================================
    키패드
-========================================= */
+===================================== */
 
 .keypad {
     width: 100%;
 
-    padding: 0 14.2%;
+    padding: 0 11.5%;
 
     display: flex;
     flex-direction: column;
@@ -108,15 +107,12 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
 
-    gap: 14.5%;
+    column-gap: 18%;
 }
-
-
-/* 개별 버튼 */
 
 .key {
     width: 100%;
-    aspect-ratio: 1;
+    aspect-ratio: 1 / 1;
 
     border-radius: 50%;
 
@@ -125,61 +121,50 @@ body {
     display: flex;
     flex-direction: column;
 
-    align-items: center;
     justify-content: center;
-
-    transition: background .08s;
+    align-items: center;
 }
 
 .key:active {
-    background: #5a5a5c;
+    background: #555;
 }
-
-
-/* 숫자 */
 
 .num {
-    font-size: 43px;
+    font-size: 40px;
     font-weight: 300;
 
-    line-height: 43px;
+    line-height: 40px;
 }
-
-
-/* 영문 */
 
 .sub {
     margin-top: 4px;
 
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
 
-    line-height: 16px;
+    line-height: 15px;
 
     letter-spacing: 3px;
 }
 
 
-/* =========================================
+/* =====================================
    통화 버튼
-========================================= */
+===================================== */
 
 .call-area {
     flex: 1;
 
+    min-height: 105px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-
-    min-height: 115px;
 }
 
-.call-button {
-    width: 166px;
-    height: 166px;
-
-    max-width: 22vw;
-    max-height: 22vw;
+.call {
+    width: 70px;
+    height: 70px;
 
     border-radius: 50%;
 
@@ -190,19 +175,19 @@ body {
     align-items: center;
 }
 
-.call-button:active {
+.call:active {
     background: #248a3d;
 }
 
-.call-button svg {
-    width: 61px;
-    height: 61px;
+.call svg {
+    width: 35px;
+    height: 35px;
 }
 
 
-/* =========================================
-   하단 탭 바
-========================================= */
+/* =====================================
+   하단 메뉴
+===================================== */
 
 .bottom {
     width: 100%;
@@ -215,110 +200,115 @@ body {
 
 .bottom-bar {
     width: 100%;
-    height: 116px;
+    height: 100px;
+
+    border-radius: 52px;
 
     background: #18181a;
 
     border: 1px solid #303034;
 
-    border-radius: 60px;
-
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
 
     align-items: center;
 }
 
 
-/* =========================================
-   탭
-========================================= */
+/* =====================================
+   각각의 탭
+===================================== */
 
 .tab {
+    min-width: 0;
+
     height: 100%;
 
     display: flex;
     flex-direction: column;
 
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
-    gap: 5px;
+    gap: 4px;
 
-    color: #fff;
+    white-space: nowrap;
 }
 
 .tab-name {
-    font-size: 16px;
-    line-height: 20px;
+    font-size: 14px;
     font-weight: 500;
+
+    line-height: 18px;
 
     white-space: nowrap;
 }
 
 
-/* =========================================
+/* =====================================
    즐겨찾기
-========================================= */
+===================================== */
 
 .star {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    font-size: 48px;
-    line-height: 48px;
+    font-size: 42px;
+    line-height: 42px;
 }
 
 
-/* =========================================
+/* =====================================
    최근 통화
-========================================= */
+===================================== */
 
-.recent-icon {
-    width: 43px;
-    height: 43px;
+.recent {
+    width: 40px;
+    height: 40px;
 
-    border: 4px solid #fff;
+    border: 3px solid white;
 
     border-radius: 50%;
 
     position: relative;
 }
 
-.recent-icon::before {
+.recent::before {
     content: "";
 
     position: absolute;
 
-    width: 4px;
-    height: 15px;
+    width: 3px;
+    height: 13px;
 
-    background: #fff;
+    background: white;
 
     border-radius: 3px;
 
-    left: 17px;
+    left: 16px;
     top: 6px;
 }
 
-.recent-icon::after {
+.recent::after {
     content: "";
 
     position: absolute;
 
-    width: 13px;
-    height: 4px;
+    width: 11px;
+    height: 3px;
 
-    background: #fff;
+    background: white;
 
     border-radius: 3px;
 
-    left: 17px;
-    top: 20px;
+    left: 16px;
+    top: 18px;
 
     transform: rotate(-35deg);
 
@@ -326,128 +316,128 @@ body {
 }
 
 
-/* =========================================
+/* =====================================
    연락처
-========================================= */
+===================================== */
 
-.person-icon {
-    width: 43px;
-    height: 43px;
+.person {
+    width: 40px;
+    height: 40px;
 
-    background: #fff;
+    background: white;
 
     border-radius: 50%;
 
     position: relative;
 }
 
-.person-icon::before {
+.person::before {
     content: "";
 
     position: absolute;
 
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
 
     background: #18181a;
 
     border-radius: 50%;
 
-    top: 7px;
-    left: 15px;
+    top: 6px;
+    left: 14px;
 }
 
-.person-icon::after {
+.person::after {
     content: "";
 
     position: absolute;
 
-    width: 27px;
-    height: 14px;
+    width: 25px;
+    height: 13px;
 
     background: #18181a;
 
-    border-radius: 15px 15px 10px 10px;
+    border-radius: 15px 15px 9px 9px;
 
     bottom: 6px;
-    left: 8px;
+    left: 7px;
 }
 
 
-/* =========================================
-   키패드 아이콘
-========================================= */
+/* =====================================
+   키패드 선택
+===================================== */
 
-.keypad-tab {
-    width: 90px;
-    height: 84px;
+.selected-area {
+    width: 70px;
+    height: 72px;
 
-    border-radius: 45px;
+    border-radius: 38px;
 
     background: #303033;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
-
-    margin-bottom: -1px;
 }
 
 .dots {
     display: grid;
 
-    grid-template-columns: repeat(3, 9px);
-    grid-template-rows: repeat(3, 9px);
+    grid-template-columns:
+        repeat(3, 8px);
 
-    gap: 6px;
+    grid-template-rows:
+        repeat(3, 8px);
+
+    gap: 5px;
 }
 
 .dot {
-    width: 9px;
-    height: 9px;
+    width: 8px;
+    height: 8px;
 
     border-radius: 50%;
 
     background: #0a9cff;
 }
 
-
-/* 선택된 키패드 글자 */
-
 .selected .tab-name {
     color: #0a9cff;
 }
 
 
-/* =========================================
+/* =====================================
    음성 사서함
-========================================= */
+===================================== */
 
 .voicemail {
     display: flex;
+
     align-items: center;
 
-    gap: 5px;
+    gap: 4px;
 }
 
 .vm {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
 
-    border: 4px solid #fff;
+    border: 3px solid white;
 
     border-radius: 50%;
 }
 
 
-/* =========================================
-   화면이 작은 아이폰
-========================================= */
+/* =====================================
+   작은 화면 보정
+===================================== */
 
 @media (max-height: 750px) {
 
-    .number-area {
-        height: 22%;
+    .display {
+        height: 27%;
     }
 
     .keypad {
@@ -455,25 +445,20 @@ body {
     }
 
     .call-area {
-        min-height: 80px;
+        min-height: 85px;
     }
 
-    .call-button {
-        width: 125px;
-        height: 125px;
-    }
-
-    .call-button svg {
-        width: 48px;
-        height: 48px;
+    .call {
+        width: 62px;
+        height: 62px;
     }
 
     .bottom-bar {
-        height: 90px;
+        height: 88px;
     }
 
     .tab-name {
-        font-size: 14px;
+        font-size: 12px;
     }
 }
 
@@ -483,27 +468,20 @@ body {
 
 <body>
 
-<div class="phone-app">
+<div class="app">
 
 
-    <!-- =================================
-         번호
-    ================================== -->
+    <!-- 번호 -->
 
-    <div class="number-area">
-
+    <div class="display">
         <div
             class="number"
             id="number">
         </div>
-
     </div>
 
 
-
-    <!-- =================================
-         키패드
-    ================================== -->
+    <!-- 키패드 -->
 
     <div
         class="keypad"
@@ -592,25 +570,19 @@ body {
     </div>
 
 
-
-    <!-- =================================
-         통화
-    ================================== -->
+    <!-- 통화 -->
 
     <div class="call-area">
 
         <div
-            class="call-button"
+            class="call"
             id="call">
 
             <svg viewBox="0 0 24 24">
 
                 <path
                     fill="white"
-                    d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24
-                    1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1
-                    C9.61 21 3 14.39 3 6c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1
-                    0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.45 2.2z"/>
+                    d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C9.61 21 3 14.39 3 6c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.45 2.2z"/>
 
             </svg>
 
@@ -619,17 +591,12 @@ body {
     </div>
 
 
-
-    <!-- =================================
-         하단 메뉴
-    ================================== -->
+    <!-- 하단 메뉴 -->
 
     <div class="bottom">
 
         <div class="bottom-bar">
 
-
-            <!-- 즐겨찾기 -->
 
             <div class="tab">
 
@@ -642,11 +609,9 @@ body {
             </div>
 
 
-            <!-- 최근 통화 -->
-
             <div class="tab">
 
-                <div class="recent-icon"></div>
+                <div class="recent"></div>
 
                 <div class="tab-name">
                     최근 통화
@@ -655,11 +620,9 @@ body {
             </div>
 
 
-            <!-- 연락처 -->
-
             <div class="tab">
 
-                <div class="person-icon"></div>
+                <div class="person"></div>
 
                 <div class="tab-name">
                     연락처
@@ -668,11 +631,9 @@ body {
             </div>
 
 
-            <!-- 키패드 -->
-
             <div class="tab selected">
 
-                <div class="keypad-tab">
+                <div class="selected-area">
 
                     <div class="dots">
 
@@ -699,8 +660,6 @@ body {
             </div>
 
 
-            <!-- 음성 사서함 -->
-
             <div class="tab">
 
                 <div class="voicemail">
@@ -724,10 +683,8 @@ body {
 </div>
 
 
-
 <script>
 
-/* 원하는 번호 */
 const targetNumber = "01012345678";
 
 let index = 0;
@@ -742,68 +699,54 @@ const call =
     document.getElementById("call");
 
 
-/* 키패드를 누르면 번호가 한 자리씩 나타남 */
+keypad.addEventListener("click", () => {
 
-keypad.addEventListener(
-    "click",
-    () => {
+    if (index < targetNumber.length) {
 
-        if (index < targetNumber.length) {
+        index++;
 
-            index++;
+        let value =
+            targetNumber.substring(0, index);
 
-            let value =
-                targetNumber.substring(
-                    0,
-                    index
-                );
+        if (
+            value.length > 3 &&
+            value.length <= 7
+        ) {
 
-
-            if (value.length > 3 &&
-                value.length <= 7) {
-
-                value =
-                    value.substring(0, 3)
-                    + "-"
-                    + value.substring(3);
-
-            }
-
-            else if (value.length > 7) {
-
-                value =
-                    value.substring(0, 3)
-                    + "-"
-                    + value.substring(3, 7)
-                    + "-"
-                    + value.substring(7);
-
-            }
-
-
-            display.textContent = value;
+            value =
+                value.substring(0, 3)
+                + "-"
+                + value.substring(3);
 
         }
 
-    }
-);
+        else if (value.length > 7) {
 
-
-/* 전화 버튼 */
-
-call.addEventListener(
-    "click",
-    () => {
-
-        if (index > 0) {
-
-            window.location.href =
-                "tel:" + targetNumber;
+            value =
+                value.substring(0, 3)
+                + "-"
+                + value.substring(3, 7)
+                + "-"
+                + value.substring(7);
 
         }
 
+        display.textContent = value;
     }
-);
+
+});
+
+
+call.addEventListener("click", () => {
+
+    if (index > 0) {
+
+        window.location.href =
+            "tel:" + targetNumber;
+
+    }
+
+});
 
 </script>
 
