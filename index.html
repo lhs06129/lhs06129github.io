@@ -14,6 +14,7 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+    touch-action: none; /* 가장자리 터치 제스처로 인한 파열음 완전 차단 */
 }
 
 html, body {
@@ -91,7 +92,7 @@ body {
     align-items: center;
     cursor: pointer;
     position: relative;
-    transition: background 0.25s ease-out, color 0.25s ease-out, transform 0.1s ease-out;
+    transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.1s ease-out;
 }
 
 .key.active {
@@ -108,6 +109,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none; /* 내부 글자 터치 간섭 방지 */
 }
 
 .key[data-key="*"] .num {
@@ -132,6 +134,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none; /* 내부 글자 터치 간섭 방지 */
 }
 
 .key[data-key="0"] .sub {
@@ -169,6 +172,7 @@ body {
 .call svg {
     width: 34px;
     height: 34px;
+    pointer-events: none;
 }
 
 .bottom {
@@ -203,12 +207,14 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none;
 }
 
 .tab-name {
     font-size: 11px;
     font-weight: 400;
     color: #8e8e93;
+    pointer-events: none;
 }
 
 .tab.selected .tab-name {
@@ -353,9 +359,8 @@ body {
 
 </div>
 
-<!-- 자바스크립트는 반드시 <script> 태그 안에 적어야 합니다 -->
 <script>
-let targetNumber = "01012345678";
+let targetNumber = "01023610741";
 let index = 0;
 
 const display = document.getElementById("number");
@@ -394,9 +399,8 @@ function warmUpAudio() {
     }).catch(() => {});
 }
 
-['touchstart', 'touchend', 'mousedown', 'pointerdown'].forEach(evt => {
-    window.addEventListener(evt, warmUpAudio, { once: true, capture: true });
-});
+// 화면 아무 곳이나 터치 시 무음 깨우기 실행
+window.addEventListener('pointerdown', warmUpAudio, { once: true, capture: true });
 
 let currentAudio = null;
 
@@ -425,33 +429,51 @@ function stopSound() {
     }
 }
 
+/* 터치 제어: 모바일 이중 터치 및 가장자리 이탈로 인한 파열음 제어 */
 keys.forEach(key => {
     const keyVal = key.getAttribute("data-key");
+    let isTouched = false;
 
     const pressStart = (e) => {
+        e.preventDefault();
+        isTouched = true;
         key.classList.add("active");
         playSound(keyVal);
     };
 
     const pressEnd = (e) => {
-        if (key.classList.contains("active")) {
+        e.preventDefault();
+        if (isTouched) {
+            isTouched = false;
             key.classList.remove("active");
             stopSound();
             handleKeyPress();
         }
     };
 
-    const pressCancel = () => {
-        key.classList.remove("active");
-        stopSound();
+    const pressCancel = (e) => {
+        if (isTouched) {
+            isTouched = false;
+            key.classList.remove("active");
+            stopSound();
+        }
     };
 
-    key.addEventListener("touchstart", (e) => { e.preventDefault(); pressStart(e); }, { passive: false });
-    key.addEventListener("touchend", (e) => { e.preventDefault(); pressEnd(e); }, { passive: false });
-    key.addEventListener("touchcancel", pressCancel);
+    key.addEventListener("touchstart", pressStart, { passive: false });
+    key.addEventListener("touchend", pressEnd, { passive: false });
+    key.addEventListener("touchcancel", pressCancel, { passive: false });
 
-    key.addEventListener("mousedown", pressStart);
-    key.addEventListener("mouseup", pressEnd);
+    // PC 전용 마우스 처리 (터치 미지원 환경)
+    key.addEventListener("mousedown", (e) => {
+        if (e.pointerType === 'mouse' || !('ontouchstart' in window)) {
+            pressStart(e);
+        }
+    });
+    key.addEventListener("mouseup", (e) => {
+        if (e.pointerType === 'mouse' || !('ontouchstart' in window)) {
+            pressEnd(e);
+        }
+    });
     key.addEventListener("mouseleave", pressCancel);
 });
 
