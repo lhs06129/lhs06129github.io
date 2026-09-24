@@ -112,38 +112,39 @@ body {
     justify-content: center;
 }
 
-/* 특수기호 별(*) 정밀 중앙 정렬 보정 */
+/* 특수기호 별(*) 완전 중앙 정렬 (내림 수정) */
 .key[data-key="*"] .num {
-    font-size: 42px;
+    font-size: 40px;
     line-height: 1;
-    transform: translateY(7px);
+    transform: translateY(11px);
 }
 
-/* 특수기호 샵(#) 정밀 위치 보정 */
+/* 특수기호 샵(#) 완전 중앙 정렬 (내림 수정) */
 .key[data-key="#"] .num {
     font-size: 32px;
     line-height: 1;
-    transform: translateY(1px);
+    transform: translateY(4px);
 }
 
-/* 알파벳 서브 텍스트 */
+/* 알파벳 서브 텍스트 (글자 간격 1px로 살짝 조정) */
 .sub {
     margin-top: 2px;
     font-size: 10px;
     font-weight: 600;
     line-height: 10px;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     height: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* + 기호 크기 및 위치 맞춤 */
+/* + 기호 위치 맞춤 */
 .key[data-key="0"] .sub {
     font-size: 14px;
     font-weight: 400;
     margin-top: 0px;
+    letter-spacing: 0;
 }
 
 /* 통화 버튼 */
@@ -368,9 +369,24 @@ const display = document.getElementById("number");
 const keys = document.querySelectorAll(".key");
 const call = document.getElementById("call");
 
-/* Web Audio API를 이용한 DTMF 키패드 사운드 구현 */
+/* Web Audio API 사전 초기화 (첫 키 입력 딜레이 및 사운드 안들림 방지) */
 let audioCtx = null;
+let currentGainNode = null;
 let currentOscillators = [];
+
+function initAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+// 첫 클릭 시 사전 활성화 전역 이벤트
+['touchstart', 'mousedown', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, initAudioContext, { once: true });
+});
 
 const dtmfFrequencies = {
     '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
@@ -380,38 +396,44 @@ const dtmfFrequencies = {
 };
 
 function playDTMF(keyVal) {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-
-    stopDTMF();
+    initAudioContext();
+    stopDTMF(); // 기존 소리 감쇄 정지
 
     const freqs = dtmfFrequencies[keyVal];
     if (!freqs) return;
 
-    const gainNode = audioCtx.createGain();
-    gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
-    gainNode.connect(audioCtx.destination);
+    currentGainNode = audioCtx.createGain();
+    // 부드러운 시작
+    currentGainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    currentGainNode.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
+    currentGainNode.connect(audioCtx.destination);
 
     currentOscillators = freqs.map(freq => {
         const osc = audioCtx.createOscillator();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.connect(gainNode);
+        osc.connect(currentGainNode);
         osc.start();
         return osc;
     });
 }
 
 function stopDTMF() {
-    if (currentOscillators.length > 0) {
-        currentOscillators.forEach(osc => {
-            try { osc.stop(); } catch(e) {}
-        });
+    if (currentGainNode && audioCtx) {
+        // 끊김 없는 부드러운 소리 연결을 위한 페이드아웃(0.03초)
+        const now = audioCtx.currentTime;
+        currentGainNode.gain.setValueAtTime(currentGainNode.gain.value, now);
+        currentGainNode.gain.linearRampToValueAtTime(0.001, now + 0.03);
+        
+        const oscsToStop = [...currentOscillators];
+        setTimeout(() => {
+            oscsToStop.forEach(osc => {
+                try { osc.stop(); } catch(e) {}
+            });
+        }, 30);
+        
         currentOscillators = [];
+        currentGainNode = null;
     }
 }
 
