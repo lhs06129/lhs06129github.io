@@ -86,16 +86,23 @@ body {
     height: 75px;
     border-radius: 50%;
     background: #1c1c1e;
+    color: #ffffff;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: background 0.15s ease;
+
+    /* 손을 떼었을 때 부드럽게 원래 색으로 복귀하는 트랜지션 */
+    transition: background 0.25s ease-out, color 0.25s ease-out, transform 0.1s ease-out;
 }
 
-.key:active {
-    background: #4a4a4a;
+/* iOS 키패드 눌림 모션 (누르고 있는 순간 즉시 반응) */
+.key.active {
+    background: #e5e5ea;
+    color: #000000;
+    transform: scale(0.96);
+    transition: none; /* 누를 때는 즉각 반응하도록 트랜지션 제거 */
 }
 
 .num {
@@ -131,10 +138,12 @@ body {
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
 }
 
-.call:active {
+.call.active {
     background: #248a3d;
+    transform: scale(0.92);
 }
 
 .call svg {
@@ -183,7 +192,6 @@ body {
     color: #8e8e93;
 }
 
-/* 선택된 탭 (키패드) */
 .tab.selected .tab-name {
     color: #2997ff;
 }
@@ -212,11 +220,7 @@ body {
 }
 
 @media (max-height: 700px) {
-    .key {
-        width: 65px;
-        height: 65px;
-    }
-    .call {
+    .key, .call {
         width: 65px;
         height: 65px;
     }
@@ -279,7 +283,6 @@ body {
     <!-- 하단 메뉴 -->
     <div class="bottom">
         <div class="bottom-bar">
-            <!-- 즐겨찾기 -->
             <div class="tab">
                 <div class="tab-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
@@ -289,7 +292,6 @@ body {
                 <div class="tab-name">즐겨찾기</div>
             </div>
 
-            <!-- 최근 통화 -->
             <div class="tab">
                 <div class="tab-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -300,7 +302,6 @@ body {
                 <div class="tab-name">최근 통화</div>
             </div>
 
-            <!-- 연락처 -->
             <div class="tab">
                 <div class="tab-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
@@ -310,7 +311,6 @@ body {
                 <div class="tab-name">연락처</div>
             </div>
 
-            <!-- 키패드 (선택됨) -->
             <div class="tab selected">
                 <div class="selected-bg">
                     <div class="dots-grid">
@@ -322,7 +322,6 @@ body {
                 <div class="tab-name">키패드</div>
             </div>
 
-            <!-- 음성 사서함 -->
             <div class="tab">
                 <div class="tab-icon">
                     <svg width="28" height="18" viewBox="0 0 28 18" fill="none" stroke="white" stroke-width="2">
@@ -339,15 +338,42 @@ body {
 </div>
 
 <script>
-const targetNumber = "01012345678";
+const targetNumber = "01023610741";
 let index = 0;
 
 const display = document.getElementById("number");
-const keypad = document.getElementById("keypad");
+const keys = document.querySelectorAll(".key");
 const call = document.getElementById("call");
 
-keypad.addEventListener("click", (e) => {
-    // 키 버튼 클릭 동작 처리
+// 버튼 터치 모션 이벤트 등록 (iOS 스타일 반응성 확보)
+keys.forEach(key => {
+    const pressStart = () => {
+        key.classList.add("active");
+    };
+
+    const pressEnd = () => {
+        if (key.classList.contains("active")) {
+            key.classList.remove("active");
+            handleKeyPress();
+        }
+    };
+
+    const pressCancel = () => {
+        key.classList.remove("active");
+    };
+
+    // 터치 및 마우스 이벤트 처리
+    key.addEventListener("touchstart", (e) => { e.preventDefault(); pressStart(); });
+    key.addEventListener("touchend", (e) => { e.preventDefault(); pressEnd(); });
+    key.addEventListener("touchcancel", pressCancel);
+
+    key.addEventListener("mousedown", pressStart);
+    key.addEventListener("mouseup", pressEnd);
+    key.addEventListener("mouseleave", pressCancel);
+});
+
+// 전화번호 입력 로직
+function handleKeyPress() {
     if (index < targetNumber.length) {
         index++;
         let value = targetNumber.substring(0, index);
@@ -360,9 +386,20 @@ keypad.addEventListener("click", (e) => {
 
         display.textContent = value;
     }
-});
+}
 
-call.addEventListener("click", () => {
+// 통화 버튼 클릭 모션
+call.addEventListener("touchstart", (e) => { e.preventDefault(); call.classList.add("active"); });
+call.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    call.classList.remove("active");
+    if (index > 0) {
+        window.location.href = "tel:" + targetNumber;
+    }
+});
+call.addEventListener("mousedown", () => call.classList.add("active"));
+call.addEventListener("mouseup", () => {
+    call.classList.remove("active");
     if (index > 0) {
         window.location.href = "tel:" + targetNumber;
     }
