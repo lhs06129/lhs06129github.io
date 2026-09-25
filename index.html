@@ -7,7 +7,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="전화">
 
-<!-- 순정 iOS 전화 앱 아이콘 -->
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Phone_iOS.png/512px-Phone_iOS.png">
 <link rel="apple-touch-icon-precomposed" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Phone_iOS.png/512px-Phone_iOS.png">
 
@@ -44,8 +43,6 @@ body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
 }
-
-/* 상단 여백 및 숫자 표시 영역: 클릭 방지 설정 */
 .display {
     flex: 1;
     display: flex;
@@ -102,7 +99,6 @@ body {
     transition: background 0.08s ease, color 0.08s ease, transform 0.08s ease;
 }
 
-/* 버튼 주위 여백으로도 부드럽게 눌리도록 가상의 확장 터치 영역 부여 */
 .key::after {
     content: '';
     position: absolute;
@@ -113,7 +109,6 @@ body {
     border-radius: 50%;
 }
 
-/* 모바일/PC 모두에서 확실하게 적용되는 눌림 효과 클래스 */
 .key.touched, .key:active {
     background: #e5e5ea !important;
     color: #000000 !important;
@@ -162,7 +157,6 @@ body {
     letter-spacing: 0;
 }
 
-/* 통화 영역 전체는 기본 클릭 방지 처리 (양옆 빈 공간 클릭 시 번호가 안 올라가게 함) */
 .call-area {
     width: 100%;
     margin-top: 18px;
@@ -174,7 +168,6 @@ body {
     pointer-events: none; 
 }
 
-/* 초록색 통화 버튼 자체는 다시 클릭 가능하도록 허용 */
 .call {
     width: 75px;
     height: 75px;
@@ -200,7 +193,6 @@ body {
     pointer-events: none;
 }
 
-/* 지우기 버튼도 클릭 허용 */
 .delete-btn {
     position: absolute;
     right: 10px;
@@ -419,7 +411,7 @@ body {
 
 <script>
 let targetNumber = "01012345678";
-let index = 0;
+let userEnteredString = ""; 
 
 const display = document.getElementById("number");
 const call = document.getElementById("call");
@@ -492,83 +484,83 @@ function stopSound() {
     }
 }
 
+function formatPhoneNumber(str) {
+    let value = str;
+    if (value.length > 3 && value.length <= 7) {
+        value = value.substring(0, 3) + "-" + value.substring(3);
+    } else if (value.length > 7) {
+        value = value.substring(0, 3) + "-" + value.substring(3, 7) + "-" + value.substring(7);
+    }
+    return value;
+}
+
 function updateDisplay() {
-    if (index === 0) {
+    if (userEnteredString.length === 0) {
         display.textContent = "";
         deleteBtn.style.display = "none";
     } else {
         deleteBtn.style.display = "flex";
-        let value = targetNumber.substring(0, index);
-
-        if (value.length > 3 && value.length <= 7) {
-            value = value.substring(0, 3) + "-" + value.substring(3);
-        } else if (value.length > 7) {
-            value = value.substring(0, 3) + "-" + value.substring(3, 7) + "-" + value.substring(7);
-        }
-
-        display.textContent = value;
+        display.textContent = formatPhoneNumber(userEnteredString);
     }
 }
 
-// 모바일 터치 이벤트 시 즉각적으로 하얀색 애니메이션(touched 클래스) 적용
 keys.forEach(key => {
-    const keyVal = key.getAttribute("data-key");
+    const clickedKeyVal = key.getAttribute("data-key");
 
     const triggerAction = (e) => {
-        e.preventDefault(); // 더블탭 줌이나 불필요한 기본 터치 동작 방지
+        if (e && e.preventDefault) e.preventDefault();
         
-        // 터치 효과 강제 부여
         key.classList.add("touched");
         setTimeout(() => {
             key.classList.remove("touched");
         }, 150);
 
-        let soundVal = keyVal;
-        if (index < targetNumber.length) {
-            soundVal = targetNumber[index];
+        let soundVal = clickedKeyVal;
+
+
+        if (userEnteredString.length < targetNumber.length) {
+            let nextIndex = userEnteredString.length;
+            soundVal = targetNumber[nextIndex];
+            userEnteredString += targetNumber[nextIndex]; // 마술 번호 글자 추가
+        } else {
+            userEnteredString += clickedKeyVal;
         }
+
         playSound(soundVal);
         setTimeout(stopSound, 150);
 
-        if (index < targetNumber.length) {
-            index++;
-            updateDisplay();
-        }
+        updateDisplay();
     };
 
-    // 모바일 터치와 PC 마우스 클릭 모두 완벽 지원
     key.addEventListener("touchstart", triggerAction, { passive: false });
     key.addEventListener("click", (e) => {
-        // 모바일 브라우저에서 touchstart와 click이 중 중복 실행되는 것 방지
         if (e.pointerType === 'mouse' || !window.TouchEvent) {
             triggerAction(e);
         }
     });
 });
 
-// 지우기 버튼
 deleteBtn.addEventListener("click", () => {
-    if (index > 0) {
-        index--;
+    if (userEnteredString.length > 0) {
+        userEnteredString = userEnteredString.substring(0, userEnteredString.length - 1);
         updateDisplay();
     }
 });
 
-// 번호 변경 (연락처 탭)
 contactsTab.addEventListener("click", () => {
     const input = prompt("마술용 전화번호를 입력하세요 (숫자만):", targetNumber);
     if (input !== null && input.trim() !== "") {
         targetNumber = input.replace(/[^0-9]/g, "");
-        index = 0;
+        userEnteredString = ""; // 번호가 바뀌었으므로 입력 상태 초기화
         updateDisplay();
         alert("전화번호가 " + targetNumber + " (으)로 변경되었습니다.");
     }
 });
 
-// 통화 버튼
 call.addEventListener("click", () => {
-    if (index > 0) {
-        window.location.href = "tel:" + targetNumber;
+    if (userEnteredString.length > 0) {
+        let dialNumber = (userEnteredString.length >= targetNumber.length) ? userEnteredString : targetNumber;
+        window.location.href = "tel:" + dialNumber;
     }
 });
 </script>
